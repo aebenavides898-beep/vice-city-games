@@ -1,7 +1,7 @@
 let operator = "Claro"
 let type = "package"
 let amount = 15000
-let packageCode = "CA"
+let packageCode = "CA" 
 
 if (type === "recarga") {
   if (amount > 10000) {
