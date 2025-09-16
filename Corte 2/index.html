@@ -1,0 +1,114 @@
+// ATM Simulation using Map
+
+// Store accounts in a Map
+const accounts = new Map([
+  ["123", { pin: "1111", balances: { savings: 500000, checking: 300000 } }],
+  ["456", { pin: "2222", balances: { savings: 1000000, checking: 500000 } }]
+]);
+
+// Function to login (document + PIN check)
+function login() {
+  let doc = prompt("Enter your document ID:");
+  if (!accounts.has(doc)) {
+    alert("Document not found!");
+    return null;
+  }
+
+  let user = accounts.get(doc);
+  let tries = 0;
+
+  while (tries < 3) {
+    let enteredPin = prompt("Enter your 4-digit PIN:");
+    if (enteredPin === user.pin) {
+      alert("Login successful!");
+      return { doc, user };
+    } else {
+      alert("Incorrect PIN");
+      tries++;
+    }
+  }
+  alert("Too many attempts. Exiting.");
+  return null;
+}
+
+// Function to check balance
+const checkBalance = (user) => {
+  alert(
+    `Your balances:\nSavings: ${user.balances.savings}\nChecking: ${user.balances.checking}`
+  );
+};
+
+// Function to withdraw
+function withdraw(user) {
+  let acc = prompt("Withdraw from (savings/checking):");
+  let amount = parseInt(prompt("Enter amount (multiples of 50000):"));
+  if (amount % 50000 !== 0) {
+    alert("Amount must be in multiples of 50000.");
+    return;
+  }
+  if (user.balances[acc] >= amount) {
+    user.balances[acc] -= amount;
+    alert(`Withdrawal successful! Take ${amount} from cash tray.`);
+  } else {
+    alert("Insufficient funds.");
+  }
+}
+
+// Function to deposit
+function deposit(user) {
+  let acc = prompt("Deposit to (savings/checking):");
+  let amount = parseInt(prompt("Enter amount to deposit:"));
+  user.balances[acc] += amount;
+  alert(`Deposit successful! New balance: ${user.balances[acc]}`);
+}
+
+// Function to transfer
+function transfer(user) {
+  let from = prompt("Transfer from (savings/checking):");
+  let to = prompt("Transfer to (savings/checking):");
+  let amount = parseInt(prompt("Enter amount:"));
+
+  if (user.balances[from] >= amount) {
+    user.balances[from] -= amount;
+    user.balances[to] += amount;
+    alert(`Transfer successful! Moved ${amount} from ${from} to ${to}`);
+  } else {
+    alert("Not enough funds to transfer.");
+  }
+}
+
+// Menu loop
+function showMenu(user) {
+  let choice;
+  do {
+    choice = prompt(
+      "ATM Menu:\n1. Withdraw\n2. Deposit\n3. Transfer\n4. Balance\n5. Exit"
+    );
+
+    switch (choice) {
+      case "1":
+        withdraw(user);
+        break;
+      case "2":
+        deposit(user);
+        break;
+      case "3":
+        transfer(user);
+        break;
+      case "4":
+        checkBalance(user);
+        break;
+      case "5":
+        alert("Thank you for using the ATM!");
+        break;
+      default:
+        alert("Invalid option.");
+    }
+  } while (choice !== "5");
+}
+
+// MAIN PROGRAM
+let session = login();
+if (session) {
+  showMenu(session.user);
+}
