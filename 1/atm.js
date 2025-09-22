@@ -57,26 +57,26 @@ function withdraw(profile) { // (profile) is the user object from bankDB
   })
 }
 
-function deposit(profile) {
-  const accounts = Object.keys(profile.accounts)
-  rl.question("Deposit to which account? (1) " + accounts[0] + "  (2) " + accounts[1] + "\n> ", ansAcc => {
-    const accIdx = parseInt(ansAcc, 10) - 1
-    const account = accounts[accIdx]
-    if (!account) return menu(profile)
+function deposit(profile) { // (profile) is the user object from bankDB
+  const accounts = Object.keys(profile.accounts) // returns an array of the keys in profile.accounts (checking, savings)
+  rl.question("Deposit to which account? (1) " + accounts[0] + "  (2) " + accounts[1] + "\n> ", ansAcc => { // ask user which account to deposit to 
+    const accIdx = parseInt(ansAcc, 10) - 1 // coverts ansAccm to a whole number and subtracts 1 to get the index of the account in the accounts array
+    const account = accounts[accIdx] //get the account name from accIdx index
+    if (!account) return menu(profile) // if account is not valid, return to menu
 
     rl.question("Select deposit type: (1) cash  (2) check\n> ", ansType => {
       const type = ansType === "1" ? "cash" : ansType === "2" ? "check" : null
       if (!type) return menu(profile)
 
       rl.question("Enter amount (e.g., 50000 or 50k):\n> ", val => {
-        const amount = parseFriendlyAmount(val)
-        if (!Number.isFinite(amount) || amount <= 0) {
+        const amount = parseFriendlyAmount(val) // parse means the amount entered by the user is converted to a number
+        if (!Number.isFinite(amount) || amount <= 0) { // if amount is not a number or less than or equal to 0
           console.log("Invalid amount.")
           return menu(profile)
         }
-        profile.accounts[account] += amount
-        console.log("Deposit successful (" + type + "). New balance (" + account + "): $" + profile.accounts[account])
-        menu(profile)
+        profile.accounts[account] += amount // add amount to the selected account
+        console.log("Deposit successful (" + type + "). New balance (" + account + "): $" + profile.accounts[account]) // show new balance
+        menu(profile) 
       })
     })
   })
@@ -102,8 +102,8 @@ function transfer(profile) {
           console.log("Insufficient funds.")
           return menu(profile)
         }
-        profile.accounts[from] -= amount
-        profile.accounts[to] += amount
+        profile.accounts[from] -= amount // subtract amount from the "from" account
+        profile.accounts[to] += amount // add amount to the "to" account
         console.log("Transfer successful. " + from + " -> " + to + ": $" + amount)
         console.log("New balances — " + from + ": $" + profile.accounts[from] + ", " + to + ": $" + profile.accounts[to])
         menu(profile)

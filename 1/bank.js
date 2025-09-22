@@ -1,6 +1,6 @@
 //  run with node bank.js
 
-const readline = require("readline")
+const readline = require("readline") // import the readline module to read input and output to the console
 
 let nextNumber = 0
 let turnsMap = new Map()
@@ -11,12 +11,12 @@ const rl = readline.createInterface({
   output: process.stdout
 })
 
-function prompt(question) {
-  return new Promise(resolve => rl.question(question, answer => resolve(answer)))
+function prompt(question) { // function to prompt the user for input
+  return new Promise(resolve => rl.question(question, answer => resolve(answer))) // return a promise that resolves with the user's answer promise contains a value that will be available in the future
 }
 
-function showCounter() {
-  console.log("Total Issued:", nextNumber)
+function showCounter() { // function to show the total number of issued tickets
+  console.log("Total Issued:", nextNumber) // print the total number of issued tickets
 }
 
 function showLast() {
@@ -34,7 +34,7 @@ function showQueue() {
 function takeTicket() {
   nextNumber++
   const n = nextNumber
-  turnsMap.set(n, { status: "waiting" })
+  turnsMap.set(n, { status: "waiting" }) // add the new ticket to the map with status "waiting"
   console.log("You took ticket", n)
 }
 
@@ -47,7 +47,7 @@ function callNext() {
     console.log("No clients waiting")
     return
   }
-  turnsMap.set(toCall, { status: "called" })
+  turnsMap.set(toCall, { status: "called" }) // update the status of the called ticket to "called"
   lastCalled = toCall
   console.log("Calling ticket", toCall)
 }

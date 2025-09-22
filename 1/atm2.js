@@ -12,33 +12,33 @@ const bankDB = {
 }
 
 /* ---------------- Helpers ---------------- */
-function pickFromList(title, options, cb) {
-  console.log(title)
-  for (let i = 0; i < options.length; i++) console.log(`${i + 1}) ${options[i]}`)
-  ask("> ", answer => {
-    const index = parseInt(answer, 10)
-    if (!Number.isFinite(index) || index < 1 || index > options.length) {
+function pickFromList(title, options, cb) { //  function to pick from a list parameters are title, options, and callback function
+  console.log(title) 
+  for (let i = 0; i < options.length; i++) console.log(`${i + 1}) ${options[i]}`) // print the options with numbers starting from 1
+  ask("> ", answer => { // ask user for input
+    const index = parseInt(answer, 10) // convert the input to a number
+    if (!Number.isFinite(index) || index < 1 || index > options.length) { // if the input is not a number or less than 1 or greater than the number of options
       console.log("Please enter a valid number from the list.")
       return pickFromList(title, options, cb)
     }
-    cb(options[index - 1], index)
+    cb(options[index - 1], index) // call the callback function with the selected option and its index
   })
 }
 
-function accountsArray(profile) {
-  return Object.keys(profile.accounts)
+function accountsArray(profile) { // function to get the accounts of a user profile
+  return Object.keys(profile.accounts) // return an array of the keys in profile.accounts (checking, savings)
 }
 
-function pickAccount(profile, promptText, cb) {
-  const arr = accountsArray(profile)
-  pickFromList(promptText, arr, account => cb(account))
+function pickAccount(profile, promptText, cb) { //  function to pick an account from a user profile
+  const arr = accountsArray(profile) // get the accounts of the user profile
+  pickFromList(promptText, arr, account => cb(account)) // call the pickFromList function with the prompt text, accounts array, and callback function
 }
 
-function parseFriendlyAmount(raw) {
-  if (!raw) return NaN
-  const s = raw.trim().toLowerCase()
+function parseFriendlyAmount(raw) { // parse amounts like "50", "50k", "fifty", "50000"
+  if (!raw) return NaN // if no input, return NaN
+  const s = raw.trim().toLowerCase() // create a variable s that is the trimmed and lowercased version of raw
 
-  if (s === "fifty") return 50000
+  if (s === "fifty") return 50000 
 
   if (s.endsWith("k")) {
     const n = parseFloat(s.slice(0, -1))
@@ -58,7 +58,7 @@ function ensureMultipleOf50k(amount) {
 
 /* ---------------- Operations ---------------- */
 function withdraw(profile) {
-  console.log("\nWithdrawal")
+  console.log("\nWithdrawal") // print "Withdrawal" to the console
   pickAccount(profile, "From which account:", account => {
     ask("Amount (e.g., 50, 50k, fifty, or full pesos like 500000): ", value => {
       const amount = parseFriendlyAmount(value)

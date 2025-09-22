@@ -3,16 +3,16 @@
 const readline = require("readline")
 const rl = readline.createInterface({ input: process.stdin, output: process.stdout })
 
-const ROOM_TYPES = new Map([
+const ROOM_TYPES = new Map([ // creates a map named ROOM_TYPES
   ["individual", { max: 2 }],
   ["double",     { max: 4 }],
   ["family",     { max: 6 }]
 ])
 
-let nextId = 1
-let reservations = new Map()
+let nextId = 1 // next reservation ID works as a simple counter
+let reservations = new Map() // creates new empty map named reservations saves reservations with key as ID and value as reservation object
 
-function ask(q, cb) { rl.question(q + "\n> ", a => cb(a.trim())) }
+function ask(q, cb) { rl.question(q + "\n> ", a => cb(a.trim())) } // function to ask a question and get user input
 
 function typeFromChoice(n) {
   if (n === "1") return "individual"
@@ -29,7 +29,7 @@ function yesNo(n) {
 
 function totalPeopleInHotel() {
   let total = 0
-  for (const r of reservations.values()) total += r.people
+  for (const r of reservations.values()) total += r.people // sum the number of people in each reservation
   return total
 }
 
