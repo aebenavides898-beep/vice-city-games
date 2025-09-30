@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Vice City Games — Online Game Store</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <div class="brand">Vice City <em>Games</em></div>
+  <div class="search"><input type="search" id="searchBar" placeholder="Search games across all platforms..."></div>
+  <div class="nav">
+    <button class="btn secondary" id="navHome">Home</button>
+    <button class="btn secondary" id="navBuy">Buy</button>
+    <button class="btn secondary" id="navCart">Cart <span class="cartBadge" id="cartCount">(0)</span></button>
+    <div class="cartTotals">Total: $<span id="cartTotalHeader">0</span></div>
+  </div>
+</header>
+
+<!-- PS5 background art (shown only when PS5 is active) -->
+<div id="psSymbols" aria-hidden="true">
+  <span class="sym circle">◯</span>
+  <span class="sym cross">✕</span>
+  <span class="sym triangle">△</span>
+  <span class="sym square">⬜</span>
+</div>
+
+<main>
+  <!-- HOME — Miami Vice neon gradient -->
+  <section id="screen-home" class="screen show">
+    <div class="vice-bg">
+      <div class="vice-vignette"></div>
+      <canvas id="viceOrbs" class="vice-orbs" aria-hidden="true"></canvas>
+    </div>
+
+    <div class="panel center vice-panel">
+      <h1 class="vice-title">Vice City Games</h1>
+      <div class="vice-cta">
+        <button class="btn consoleBtn" data-console="PS5">PS5</button>
+        <button class="btn consoleBtn" data-console="Xbox Series X|S">Xbox</button>
+        <button class="btn consoleBtn" data-console="Switch">Switch</button>
+        <button class="btn consoleBtn" data-console="PC">PC</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- SHOP -->
+  <section id="screen-shop" class="screen">
+    <div class="panel">
+      <button class="btn secondary" id="backHome">← Back to Home</button>
+      <h2 id="shopTitle">Choose your platform</h2>
+      <div id="consoleBar" class="bar"></div>
+
+      <div class="layout">
+        <div>
+          <div id="filters" class="filters">
+            <label>Genre
+              <select id="genreSelect">
+                <option value="ALL">All</option>
+                <option>Action</option><option>Adventure</option><option>Horror</option>
+                <option>RPG</option><option>Shooter</option><option>Racing</option>
+                <option>Platformer</option><option>Simulation</option>
+              </select>
+            </label>
+            <label>Min $<input type="number" id="minPrice" placeholder="0"></label>
+            <label>Max $<input type="number" id="maxPrice" placeholder="999"></label>
+            <button class="btn" id="applyFilters">Apply</button>
+            <button class="btn" id="clearFilters">Clear</button>
+          </div>
+
+          <div id="catalogGrid" class="grid"></div>
+        </div>
+
+        <aside class="miniCart">
+          <div class="miniCartTitle">🛒 Your Cart</div>
+          <div class="miniList" id="miniList"></div>
+          <div class="miniTotals">
+            <span>Items:<strong id="miniCount">0</strong></span>
+            <span>Total:$<strong id="miniTotal">0</strong></span>
+          </div>
+          <div class="miniActions">
+            <button class="btn secondary" id="miniClear">Clear</button>
+            <button class="btn" id="miniGoCart">Checkout</button>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <!-- CART -->
+  <section id="screen-cart" class="screen">
+    <div class="panel">
+      <button class="btn secondary" id="backShop">← Back to Shop</button>
+      <h2>Your Cart</h2>
+      <div id="cartItems"></div>
+      <h3>Total: $<span id="cartTotal">0</span></h3>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn secondary" id="clearCart">Clear Cart</button>
+        <button class="btn" id="checkoutBtn">Checkout</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- Chatbot -->
+<button id="openChat" class="chat-btn">Chat</button>
+<div id="chat" class="chatbox">
+  <header><strong>Vice Bot</strong></header>
+  <div id="chatlog" class="chatlog"></div>
+  <form id="chatForm"><input id="chatInput" placeholder="Ask about genres, prices, platforms..."><button>Send</button></form>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>

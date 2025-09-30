@@ -1,0 +1,198 @@
+:root{
+  --bg:#0a0a0f; --panel:#10121a; --accent:#00e5ff; --muted:#9aa4b2; --text:#e9edf3;
+  --pink:#ff4db8; --cyan:#00e5ff; --violet:#915cff; --lime:#00ff95; --red:#ff4545;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;color:var(--text);background:var(--bg);}
+
+/* Header */
+header{padding:16px 20px;background:#0b0d14;border-bottom:1px solid #171a24;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.brand{font-weight:900;letter-spacing:.5px;flex:1}
+.brand em{color:var(--accent);font-style:normal}
+.search{flex:2;display:flex;justify-content:center}
+#searchBar{width:60%;max-width:430px;padding:8px 12px;border-radius:20px;border:1px solid #22283b;background:#0e1120;color:var(--text)}
+.nav{flex:1;display:flex;gap:8px;justify-content:flex-end;align-items:center;flex-wrap:wrap}
+.btn{background:#12182a;color:var(--text);border:1px solid #1f2740;padding:10px 14px;border-radius:10px;cursor:pointer;font-weight:800;letter-spacing:.2px}
+.btn:hover{box-shadow:0 0 12px rgba(0,229,255,.35),0 0 4px rgba(255,77,184,.2) inset;border-color:#28345a}
+.btn.secondary{background:#0f1424}
+.cartBadge{font-weight:800}
+.cartTotals{color:var(--muted);font-size:.9rem}
+
+/* Layout + Cards */
+main{max-width:1150px;margin:0 auto;padding:24px}
+.panel{background:linear-gradient(180deg,#0e1120, #0a0d1a);border:1px solid #1a2239;border-radius:16px;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+.center{text-align:center}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px;margin-top:16px}
+.card{background:#0f1322;border:1px solid #1c2440;border-radius:14px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 6px 16px rgba(0,0,0,.35)}
+.thumb{width:100%;aspect-ratio:16/9;object-fit:cover;background:#0f1320}
+.meta{padding:12px;display:grid;gap:6px}
+.title{font-weight:800;line-height:1.2}
+.muted{color:#9aa4b2;font-size:.9rem}
+.price{margin-top:4px;font-weight:900}
+.pill{display:inline-block;font-size:.75rem;padding:2px 8px;border:1px solid #2b3753;border-radius:999px;color:#c7d2e1}
+
+/* Base Add to Cart button */
+.add{
+  margin-top:8px;
+  border:none;
+  border-radius:8px;
+  padding:8px;
+  cursor:pointer;
+  font-weight:900;
+  color:#021;
+  transition:transform .05s ease, box-shadow .2s ease;
+}
+.add:active{ transform:scale(.96) }
+
+/* Platform-specific Add buttons */
+body.ps5-bg .add{
+  background:linear-gradient(90deg,#285dff,#ff5ccf);
+  box-shadow:0 0 10px rgba(40,93,255,.4), 0 0 20px rgba(255,92,207,.3);
+  color:white;
+}
+body.xbox-bg .add{
+  background:linear-gradient(90deg,#00ff95,#00c86b);
+  box-shadow:0 0 12px rgba(0,255,149,.5), 0 0 25px rgba(0,200,107,.4);
+  color:black;
+}
+body.switch-bg .add{
+  background:linear-gradient(90deg,#e60012,#0ab9e6);
+  box-shadow:0 0 12px rgba(230,0,18,.5), 0 0 25px rgba(10,185,230,.4);
+  color:white;
+}
+body.pc-bg .add{
+  background:linear-gradient(90deg,#00e5ff,#ff4db8);
+  box-shadow:0 0 12px rgba(0,229,255,.5), 0 0 25px rgba(255,77,184,.4);
+  color:black;
+}
+
+/* Filters & bar */
+.bar{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}
+.chip{background:#0f1426;color:var(--text);border:1px solid #253255;padding:8px 12px;border-radius:999px;cursor:pointer;transition:transform .05s ease}
+.chip:active{transform:scale(.98)}
+/* cute per-console colors */
+.chip[data-cs="PS5"]{border-color:#285dff;}
+.chip.active[data-cs="PS5"]{background:linear-gradient(90deg,#285dff,#ff5ccf);border-color:#7aa0ff;box-shadow:0 0 10px rgba(40,93,255,.35)}
+.chip[data-cs="Xbox Series X|S"]{border-color:#00c86b;}
+.chip.active[data-cs="Xbox Series X|S"]{background:linear-gradient(90deg,#00ff95,#00c86b);border-color:#00ff95;box-shadow:0 0 10px rgba(0,255,149,.35)}
+.chip[data-cs="Switch"]{border-color:#ff4a4a;}
+.chip.active[data-cs="Switch"]{background:linear-gradient(90deg,#ff4a4a,#0ab9e6);border-color:#ff8080;box-shadow:0 0 10px rgba(255,74,74,.35)}
+.chip[data-cs="PC"]{border-color:#00e5ff;}
+.chip.active[data-cs="PC"]{background:linear-gradient(90deg,#00e5ff,#ff4db8);border-color:#00e5ff;box-shadow:0 0 10px rgba(0,229,255,.35)}
+
+.filters{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:#0f1324;padding:10px;border:1px solid #1e2744;border-radius:12px}
+select,input{background:#0c1122;color:var(--text);border:1px solid #263046;padding:8px 10px;border-radius:8px;min-width:140px}
+
+/* Layout w/ mini cart */
+.layout{display:grid;grid-template-columns:1fr 280px;gap:18px;align-items:start}
+.miniCart{position:sticky;top:16px;background:#0e1222;border:1px solid #223154;border-radius:14px;padding:12px;display:grid;gap:10px;box-shadow:0 8px 18px rgba(0,0,0,.35)}
+.miniCartTitle{font-weight:900}
+.miniList{display:grid;gap:8px;max-height:320px;overflow:auto}
+.miniRow{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center}
+.miniRow button{background:#8b1c1c;border:none;color:#fff;padding:4px 8px;border-radius:6px;cursor:pointer}
+.miniTotals{display:flex;justify-content:space-between;align-items:center}
+.miniActions{display:flex;gap:8px}
+.miniActions .btn{padding:8px 10px}
+
+/* Cart page */
+#cartItems{display:grid;gap:10px;margin-top:10px}
+.cartItem{background:#10162a;padding:10px;border-radius:8px;display:flex;justify-content:space-between;align-items:center}
+.cartItem button{background:#8b1c1c;border:none;color:#fff;padding:6px 10px;border-radius:6px;cursor:pointer}
+
+/* Chatbot */
+.chat-btn{position:fixed;right:18px;bottom:18px;background:linear-gradient(90deg,var(--pink),var(--cyan));color:#021;border:none;border-radius:999px;padding:14px 16px;font-weight:900;cursor:pointer;box-shadow:0 8px 20px rgba(0,0,0,.4)}
+.chatbox{position:fixed;right:18px;bottom:78px;width:320px;max-height:60vh;display:none;flex-direction:column;background:#0f1426;border:1px solid #28365e;border-radius:14px;overflow:hidden;box-shadow:0 12px 28px rgba(0,0,0,.45)}
+.chatbox header{background:#121a2e;border:0;padding:10px 12px}
+.chatlog{padding:12px;overflow:auto;display:grid;gap:10px}
+.msg{padding:8px 10px;border-radius:10px;max-width:85%}
+.me{background:#193055;margin-left:auto}
+.bot{background:#1a2238}
+.chatbox form{display:flex;gap:6px;padding:10px;border-top:1px solid #223153}
+.chatbox input{flex:1;padding:10px;border-radius:10px;border:1px solid #2c3d63;background:#0b1020;color:var(--text)}
+.chatbox button{padding:10px 12px;border-radius:10px;background:linear-gradient(90deg,var(--cyan),var(--pink));color:#021;border:none;font-weight:900}
+
+/* Screens + SPA */
+.screen{display:none}
+.screen.show{display:block}
+#screen-shop.fullpage{min-height:100vh;padding:0;margin:0;border-radius:0}
+
+/* ===== Miami Vice HOME ===== */
+#screen-home{position:relative;min-height:72vh;display:grid;place-items:center;overflow:hidden;border-radius:16px}
+.vice-bg{
+  position:absolute;inset:0;overflow:hidden;
+  background: linear-gradient(180deg,
+    #ff6ec7 0%,
+    #ff9a44 30%,
+    #1e3c72 70%,
+    #2a0845 100%
+  );
+}
+.vice-vignette{position:absolute;inset:0;background:radial-gradient(circle at center, transparent 60%, rgba(5,7,15,.8) 85%)}
+.vice-orbs{position:absolute;inset:0;z-index:1;pointer-events:none}
+.vice-panel{
+  position:relative;z-index:2;max-width:780px;
+  background:linear-gradient(180deg,rgba(10,12,20,.7),rgba(10,12,20,.85));
+  border:1px solid rgba(255,255,255,.25);
+  box-shadow:0 10px 40px rgba(0,0,0,.6),0 0 30px rgba(255,77,184,.2) inset;
+  backdrop-filter: blur(6px);
+}
+.vice-title{
+  font-weight:900;letter-spacing:1px;color:#fff;
+  text-shadow:0 0 6px #fff, 0 0 16px var(--cyan), 0 0 28px var(--pink);
+}
+.vice-cta{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:12px}
+
+/* =========================================
+   PLATFORM BACKGROUNDS — Iconic looks
+   ========================================= */
+
+/* --- PS5: Blue → Pink diagonal gradient --- */
+body.ps5-bg {
+  background: linear-gradient(135deg, #0033cc, #ff66cc);
+  background-attachment: fixed;
+}
+
+/* --- Xbox: clean dark + green edge glow (no fog) --- */
+body.xbox-bg {
+  background: #0a0a0f;
+  background-attachment: fixed;
+}
+body.xbox-bg::after {
+  content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  box-shadow:
+    inset 0 0 0 6px rgba(0,255,149,.45),
+    inset 0 0 80px 30px rgba(0,255,149,.22),
+    inset 0 0 160px 60px rgba(0,255,149,.14);
+}
+
+/* --- Switch: Half red / half cyan split --- */
+body.switch-bg {
+  background: linear-gradient(90deg, #e60012 50%, #0ab9e6 50%);
+  background-attachment: fixed;
+}
+body.switch-bg::after {
+  content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  box-shadow:
+    inset 0 0 0 6px rgba(255,74,74,.4),
+    inset 0 0 0 12px rgba(10,185,230,.4);
+}
+
+/* --- PC: Neon cyberpunk grid --- */
+body.pc-bg {
+  background:
+    radial-gradient(circle at 20% 30%, rgba(0,229,255,.18), transparent 60%),
+    radial-gradient(circle at 80% 70%, rgba(255,77,184,.18), transparent 60%),
+    linear-gradient(180deg,#0b0d16 0%, #0a0b13 60%, #07080d 100%);
+  background-attachment: fixed;
+}
+body.pc-bg::before {
+  content:"";
+  position: fixed; inset: 0; z-index: 0; pointer-events:none;
+  background:
+    linear-gradient(rgba(0,229,255,.45) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,77,184,.45) 1px, transparent 1px);
+  background-size: 70px 70px;
+  transform: perspective(520px) rotateX(62deg);
+  transform-origin: bottom;
+  opacity:.35;
+}
