@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>The Velvet Room — Online Game Store</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<style>
+  :root { --bg:#0d0f14; --panel:#141823; --accent:#38f; --muted:#9aa4b2; --text:#e9edf3; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; color: var(--text); background: var(--bg); transition: background 0.5s ease; }
+
+  header { padding: 16px 20px; background: #0b0e15; border-bottom: 1px solid #121728; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+  .brand { font-weight: 800; letter-spacing: .5px; flex: 1; }
+  .brand em { color: var(--accent); font-style: normal; }
+
+  .search { flex: 2; display: flex; justify-content: center; }
+  #searchBar { width: 60%; max-width: 420px; padding: 8px 12px; border-radius: 20px; border: 1px solid #263046; background:#0f1320; color:var(--text); }
+
+  .nav { flex: 1; display: flex; gap: 8px; justify-content: flex-end; align-items: center; flex-wrap: wrap; }
+  .btn { background: #172033; color: var(--text); border: 1px solid #1f2942; padding: 10px 14px; border-radius: 10px; cursor: pointer; font-weight: 700; }
+  .btn:hover { outline: 2px solid var(--accent); }
+  .btn.secondary { background: #0f1424; }
+  .cartBadge { font-weight: 800; }
+  .cartTotals { color: var(--muted); font-size: .9rem; }
+
+  main { max-width: 1150px; margin: 0 auto; padding: 24px; }
+  .panel { background: var(--panel); border: 1px solid #1c2336; border-radius: 16px; padding: 20px; }
+  .center { text-align: center; }
+
+  .bar { display: flex; gap: 8px; flex-wrap: wrap; margin: 16px 0; }
+  .chip { background: #101629; color: var(--text); border: 1px solid #233153; padding: 8px 12px; border-radius: 999px; cursor: pointer; }
+  .chip.active { background: #172033; border-color: var(--accent); }
+
+  .filters { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; background: var(--panel); padding: 10px; border: 1px solid #1f2538; border-radius: 12px; }
+  select, input { background: #0f1320; color: var(--text); border: 1px solid #263046; padding: 8px 10px; border-radius: 8px; min-width: 140px; }
+
+  .layout { display: grid; grid-template-columns: 1fr 280px; gap: 18px; align-items: start; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 16px; margin-top: 16px; }
+  .card { background: var(--panel); border: 1px solid #1f2538; border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; }
+  .thumb { width: 100%; aspect-ratio: 16/9; object-fit: cover; background: #0f1320; }
+  .meta { padding: 12px; display: grid; gap: 6px; }
+  .title { font-weight: 700; line-height: 1.2; }
+  .muted { color: var(--muted); font-size: 0.9rem; }
+  .price { margin-top: 4px; font-weight: 800; }
+  .pill { display: inline-block; font-size: 0.75rem; padding: 2px 8px; border: 1px solid #2b3753; border-radius: 999px; color: #c7d2e1; }
+  .add { margin-top: 8px; background: var(--accent); color: #021; border: none; border-radius: 8px; padding: 8px; cursor: pointer; font-weight: 700; }
+
+  /* Mini cart */
+  .miniCart { position: sticky; top: 16px; background: #0f1424; border: 1px solid #243154; border-radius: 14px; padding: 12px; display: grid; gap: 10px; }
+  .miniCartTitle { font-weight: 800; }
+  .miniList { display: grid; gap: 8px; max-height: 320px; overflow: auto; }
+  .miniRow { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; align-items: center; }
+  .miniRow button { background: #8b1c1c; border: none; color: #fff; padding: 4px 8px; border-radius: 6px; cursor: pointer; }
+  .miniTotals { display: flex; justify-content: space-between; align-items: center; }
+  .miniTotals strong { font-size: 1.05rem; }
+  .miniActions { display: flex; gap: 8px; }
+  .miniActions .btn { padding: 8px 10px; }
+
+  /* Cart */
+  #cartItems { display: grid; gap: 10px; margin-top: 10px; }
+  .cartItem { background: #101629; padding: 10px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; }
+  .cartItem span { font-size: 0.95rem; }
+  .cartItem button { background: #8b1c1c; border: none; color: #fff; padding: 6px 10px; border-radius: 6px; cursor: pointer; }
+
+  /* Chatbot */
+  .chat-btn { position: fixed; right: 18px; bottom: 18px; background: var(--accent); color: #021; border: none; border-radius: 999px; padding: 14px 16px; font-weight: 800; cursor: pointer; box-shadow: 0 8px 20px rgba(0,0,0,.4); }
+  .chatbox { position: fixed; right: 18px; bottom: 78px; width: 320px; max-height: 60vh; display: none; flex-direction: column; background: #0f1424; border: 1px solid #243154; border-radius: 14px; overflow: hidden; }
+  .chatbox header { background: #121a2e; border: 0; padding: 10px 12px; }
+  .chatlog { padding: 12px; overflow: auto; display: grid; gap: 10px; }
+  .msg { padding: 8px 10px; border-radius: 10px; max-width: 85%; }
+  .me { background: #193055; margin-left: auto; }
+  .bot { background: #1a2238; }
+  .chatbox form { display: flex; gap: 6px; padding: 10px; border-top: 1px solid #223153; }
+  .chatbox input { flex: 1; padding: 10px; border-radius: 10px; border: 1px solid #2c3d63; background: #0b1020; color: var(--text); }
+  .chatbox button { padding: 10px 12px; border-radius: 10px; background: var(--accent); color: #021; border: none; font-weight: 800; cursor: pointer; }
+
+  .screen { display: none; }
+  .screen.show { display: block; }
+
+  /* Dynamic backgrounds */
+  body.ps5-bg { background: linear-gradient(135deg,#0033cc,#ff66cc); }
+  body.ps5-bg::after { content:"◯ ✕ 🔺 ⬜"; font-size:20vw; opacity:.05; position:fixed; top:20%; left:10%; white-space:pre; pointer-events:none; }
+  body.xbox-bg { background:#107C10; }
+  body.switch-bg { background:linear-gradient(90deg,#e60012 50%,#0ab9e6 50%); }
+  body.pc-bg { 
+    background: radial-gradient(circle at top left,#111,#000), 
+                repeating-linear-gradient(90deg,rgba(0,255,200,.15) 0 2px,transparent 2px 40px), 
+                repeating-linear-gradient(0deg,rgba(0,255,200,.15) 0 2px,transparent 2px 40px);
+    background-color:#0d0d0d;
+  }
+  body.pc-bg::after {
+    content:"";
+    position:fixed; inset:0;
+    background: radial-gradient(circle at center,rgba(0,255,200,.1),transparent 70%);
+    pointer-events:none;
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">The <em>Velvet Room</em></div>
+  <div class="search"><input type="search" id="searchBar" placeholder="Search games across all platforms..."></div>
+  <div class="nav">
+    <button class="btn secondary" id="navHome">Home</button>
+    <button class="btn secondary" id="navBuy">Buy</button>
+    <button class="btn secondary" id="navCart">Cart <span class="cartBadge" id="cartCount">(0)</span></button>
+    <div class="cartTotals">Total: $<span id="cartTotalHeader">0</span></div>
+  </div>
+</header>
+
+<main>
+  <!-- HOME -->
+  <section id="screen-home" class="screen show">
+    <div class="panel center">
+      <h1>Welcome to The Velvet Room 🎮</h1>
+      <p class="sub">Click <b>Buy</b>, choose a console, filter or search globally.</p>
+      <button class="btn" id="ctaBuy">Start Shopping</button>
+    </div>
+  </section>
+
+  <!-- SHOP -->
+  <section id="screen-shop" class="screen">
+    <div class="panel">
+      <button class="btn secondary" id="backHome">← Back to Home</button>
+      <h2>Choose your platform</h2>
+      <div id="consoleBar" class="bar"></div>
+      <div class="layout">
+        <div>
+          <div id="filters" class="filters">
+            <label>Genre
+              <select id="genreSelect">
+                <option value="ALL">All</option><option>Action</option><option>Adventure</option><option>Horror</option><option>RPG</option><option>Shooter</option><option>Racing</option><option>Platformer</option><option>Simulation</option>
+              </select>
+            </label>
+            <label>Min $<input type="number" id="minPrice" placeholder="0"></label>
+            <label>Max $<input type="number" id="maxPrice" placeholder="999"></label>
+            <button class="btn" id="applyFilters">Apply</button>
+            <button class="btn" id="clearFilters">Clear</button>
+          </div>
+          <div id="catalogGrid" class="grid"></div>
+        </div>
+        <aside class="miniCart">
+          <div class="miniCartTitle">🛒 Your Cart</div>
+          <div class="miniList" id="miniList"></div>
+          <div class="miniTotals"><span>Items:<strong id="miniCount">0</strong></span><span>Total:$<strong id="miniTotal">0</strong></span></div>
+          <div class="miniActions"><button class="btn secondary" id="miniClear">Clear</button><button class="btn" id="miniGoCart">Checkout</button></div>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <!-- CART -->
+  <section id="screen-cart" class="screen">
+    <div class="panel">
+      <button class="btn secondary" id="backShop">← Back to Shop</button>
+      <h2>Your Cart</h2>
+      <div id="cartItems"></div>
+      <h3>Total: $<span id="cartTotal">0</span></h3>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn secondary" id="clearCart">Clear Cart</button>
+        <button class="btn" id="checkoutBtn">Checkout</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- Chatbot -->
+<button id="openChat" class="chat-btn">Chat</button>
+<div id="chat" class="chatbox"><header><strong>Velvet Bot</strong></header><div id="chatlog" class="chatlog"></div>
+  <form id="chatForm"><input id="chatInput" placeholder="Ask about genres, prices, platforms..."><button>Send</button></form>
+</div>
+
+<script>
+const PLACEHOLDER="https://via.placeholder.com/640x360?text=Image+not+available";
+
+// ====== Catalog ======
+const catalog=new Map([
+  ["PS5",new Map([
+    [1,{name:"PlayStation 5 Console",type:"console",genre:"—",price:500,year:2020,img:"https://upload.wikimedia.org/wikipedia/commons/f/f4/PlayStation_5_and_DualSense_%282%29.jpg"}],
+    [2,{name:"Elden Ring",type:"game",genre:"RPG",price:60,year:2022,img:"https://cdn.cloudflare.steamstatic.com/steam/apps/1245620/header.jpg"}],
+    [3,{name:"Resident Evil 4 Remake",type:"game",genre:"Horror",price:70,year:2023,img:"https://cdn.cloudflare.steamstatic.com/steam/apps/2050650/header.jpg"}],
+    [4,{name:"Marvel’s Spider-Man Remastered",type:"game",genre:"Action",price:70,year:2022,img:"https://cdn.cloudflare.steamstatic.com/steam/apps/1817070/header.jpg"}],
+    [5,{name:"Demon’s Souls",type:"game",genre:"RPG",price:70,year:2020,img:"https://image.api.playstation.com/vulcan/ap/rnd/202010/2821/1bXqX8g0I4jjY4n4KqVREmX2.png"}],
+    [6,{name:"Final Fantasy XVI",type:"game",genre:"RPG",price:70,year:2023,img:"https://cdn.cloudflare.steamstatic.com/steam/apps/1608070/header.jpg"}],
+    [7,{name:"Ghost of Tsushima Director’s Cut",type:"game",genre:"Action",price:60,year:2021,img:"https://cdn.cloudflare.steamstatic.com/steam/apps/2215430/header.jpg"}],
+  ])],
+  ["Xbox Series X|S",new Map([
+    [1,{name:"Xbox Series X",type:"console",genre:"—",price:500,year:2020,img:"https://upload.wikimedia.org/wikipedia/commons/5/5c/Xbox_Series_%28X%29.jpg"}],
+    [2,{name:"Starfield",type:"game",genre:"RPG",price:70,year:2023,img:"https://cdn.cloudflare.steamstatic.com/steam/apps/1716740/header.jpg"}],
+    [3,{name:"Halo Infinite",type:"game",genre:"Shooter",price:60,year:2021,img:"https://cdn.cloudflare.steamstatic.com/steam/apps/1240440/header.jpg"}],
+    [4,{name:"Forza Horizon 5",type:"game",genre:"Racing",price:60,year:2021,img:"https://cdn.cloudflare.steamstatic.com/steam/apps/1551360/header.jpg"}],
+    [5,{name:"Forza Motorsport (2023)",type:"game",genre:"Racing",price:70,year:2023,img:"https://cdn.akamai.steamstatic.com/steam/apps/2440510/header.jpg"}],
+    [6,{name:"Gears 5 (Series X|S Update)",type:"game",genre:"Shooter",price:40,year:2020,img:"https://cdn.cloudflare.steamstatic.com/steam/apps/1097840/header.jpg"}],
+    [7,{name:"Avowed",type:"game",genre:"RPG",price:70,year:2024,img:"https://cdn.akamai.steamstatic.com/steam/apps/2081060/header.jpg"}],
+  ])],
+  ["Switch",new Map([
+    [1,{name:"Nintendo Switch OLED",type:"console",genre:"—",price:350,year:2021,img:"https://upload.wikimedia.org/wikipedia/commons/3/3a/Nintendo_Switch_-_OLED.JPG"}],
+    [2,{name:"Zelda: Tears of the Kingdom",type:"game",genre:"Adventure",price:70,year:2023,img:"https://assets.nintendo.com/image/upload/f_auto/q_auto/dpr_auto/c_fill,w_600/ncom/en_US/games/switch/t/the-legend-of-zelda-tears-of-the-kingdom-switch/hero"}],
+    [3,{name:"Metroid Dread",type:"game",genre:"Action",price:60,year:2021,img:"https://assets.nintendo.com/image/upload/f_auto/q_auto/dpr_auto/c_fill,w_600/ncom/en_US/games/switch/m/metroid-dread-switch/hero"}],
+    [4,{name:"Pokémon Scarlet & Violet",type:"game",genre:"RPG",price:60,year:2022,img:"https://assets.nintendo.com/image/upload/f_auto/q_auto/dpr_auto/c_fill,w_600/ncom/en_US/games/switch/p/pokemon-scarlet-switch/hero"}],
+    [5,{name:"Animal Crossing: New Horizons",type:"game",genre:"Simulation",price:60,year:2020,img:"https://assets.nintendo.com/image/upload/f_auto/q_auto/dpr_auto/c_fill,w_600/ncom/en_US/games/switch/a/animal-crossing-new-horizons-switch/hero"}],
+  ])],
+  ["PC",new Map([
+    [1,{name:"Gaming PC Tower",type:"console",genre:"—",price:1200,year:2024,img:"https://upload.wikimedia.org/wikipedia/commons/8/89/Gaming_computer.jpg"}],
+    [2,{name:"Baldur’s Gate 3",type:"game",genre:"RPG",price:70,year:2023,img:"https://cdn.cloudflare.steamstatic.com/steam/apps/1086940/header.jpg"}],
+    [3,{name:"Cyberpunk 2077: Phantom Liberty",type:"game",genre:"RPG",price:30,year:2023,img:"https://cdn.cloudflare.steamstatic.com/steam/apps/2138330/header.jpg"}],
+    [4,{name:"Helldivers 2",type:"game",genre:"Shooter",price:40,year:2024,img:"https://cdn.cloudflare.steamstatic.com/steam/apps/553850/header.jpg"}],
+    [5,{name:"Doom Eternal",type:"game",genre:"Shooter",price:60,year:2020,img:"https://cdn.cloudflare.steamstatic.com/steam/apps/782330/header.jpg"}],
+    [6,{name:"Horizon Zero Dawn Complete Edition",type:"game",genre:"Action",price:50,year:2020,img:"https://cdn.cloudflare.steamstatic.com/steam/apps/1151640/header.jpg"}],
+    [7,{name:"Palworld",type:"game",genre:"Adventure",price:30,year:2024,img:"https://cdn.cloudflare.steamstatic.com/steam/apps/1623730/header.jpg"}],
+  ])],
+]);
+
+// ====== Screens ======
+function show(id){document.querySelectorAll(".screen").forEach(s=>s.classList.remove("show"));document.getElementById(id).classList.add("show");}
+document.getElementById("navHome").onclick=()=>{document.body.className="";show("screen-home");};
+document.getElementById("navBuy").onclick=()=>{document.body.className="";show("screen-shop");};
+document.getElementById("navCart").onclick=()=>show("screen-cart");
+document.getElementById("ctaBuy").onclick=()=>show("screen-shop");
+document.getElementById("backHome").onclick=()=>{document.body.className="";show("screen-home");};
+document.getElementById("backShop").onclick=()=>show("screen-shop");
+
+// ====== Shop logic ======
+const consoles=Array.from(catalog.keys());
+const consoleBar=document.getElementById("consoleBar");
+const grid=document.getElementById("catalogGrid");
+const genreSelect=document.getElementById("genreSelect");
+const minPrice=document.getElementById("minPrice");
+const maxPrice=document.getElementById("maxPrice");
+document.getElementById("applyFilters").onclick=renderCatalog;
+document.getElementById("clearFilters").onclick=()=>{genreSelect.value="ALL";minPrice.value="";maxPrice.value="";renderCatalog();};
+
+let currentConsole=null;
+function renderConsoleButtons(){
+  consoleBar.innerHTML="";
+  consoles.forEach(cs=>{
+    const b=document.createElement("button");
+    b.className="chip"+(cs===currentConsole?" active":"");
+    b.textContent=cs;
+    b.onclick=()=>{currentConsole=cs;setBackground(cs);renderConsoleButtons();renderCatalog();};
+    consoleBar.appendChild(b);
+  });
+}
+renderConsoleButtons();
+
+function setBackground(console){
+  document.body.className="";
+  if(console==="PS5") document.body.classList.add("ps5-bg");
+  if(console==="Xbox Series X|S") document.body.classList.add("xbox-bg");
+  if(console==="Switch") document.body.classList.add("switch-bg");
+  if(console==="PC") document.body.classList.add("pc-bg");
+}
+
+function passesFilters(item){
+  if(item.type==="game" && genreSelect.value!=="ALL" && item.genre!==genreSelect.value) return false;
+  const min=+minPrice.value||0, max=+maxPrice.value||Infinity;
+  return item.price>=min && item.price<=max;
+}
+function imgTag(src,alt){return `<img class="thumb" src="${src}" alt="${alt}" loading="lazy" onerror="this.src='${PLACEHOLDER}'">`;}
+function renderCatalog(items){
+  grid.innerHTML=currentConsole?"":"<div class='panel'>Select a console above</div>";
+  if(!currentConsole) return;
+  items = items || catalog.get(currentConsole);
+  items.forEach(item=>{
+    if(!passesFilters(item)) return;
+    const card=document.createElement("div");
+    card.className="card";
+    card.innerHTML=`${imgTag(item.img,item.name)}<div class='meta'>
+      <div class='title'>${item.name}</div>
+      <div class='muted'><span class='pill'>${item.type==="game"?item.genre:"Hardware"}</span> • Year ${item.year}</div>
+      <div class='price'>$${item.price}</div>
+      <button class='add'>Add to Cart</button>
+    </div>`;
+    card.querySelector(".add").onclick=()=>addToCart(item);
+    grid.appendChild(card);
+  });
+  if(!grid.children.length){
+    grid.innerHTML="<div class='panel'><b>No items match your filters.</b> Try clearing them.</div>";
+  }
+}
+
+// ====== Cart logic ======
+let cart=[];
+function addToCart(item){ cart.push({...item}); updateCartUI(); }
+function removeFromCart(index){ cart.splice(index,1); updateCartUI(); }
+function clearCart(){ cart = []; updateCartUI(); }
+function computeTotal(){ return cart.reduce((sum,i)=>sum+(+i.price||0),0); }
+
+const cartCount=document.getElementById("cartCount");
+const cartTotalHeader=document.getElementById("cartTotalHeader");
+const miniList=document.getElementById("miniList");
+const miniCount=document.getElementById("miniCount");
+const miniTotal=document.getElementById("miniTotal");
+const cartItems=document.getElementById("cartItems");
+const cartTotal=document.getElementById("cartTotal");
+
+document.getElementById("miniClear").onclick=clearCart;
+document.getElementById("miniGoCart").onclick=()=>show("screen-cart");
+document.getElementById("clearCart").onclick=clearCart;
+document.getElementById("checkoutBtn").onclick=()=>{
+  alert("Checkout complete! You bought "+cart.length+" item(s) totaling $"+computeTotal());
+  clearCart(); show("screen-home");
+};
+
+function updateCartUI(){
+  const total=computeTotal();
+  cartCount.textContent=`(${cart.length})`;
+  cartTotalHeader.textContent=total;
+
+  // mini cart
+  miniList.innerHTML="";
+  cart.forEach((it,i)=>{
+    const row=document.createElement("div");
+    row.className="miniRow";
+    row.innerHTML=`<span>${it.name}</span><span>$${it.price}</span><button>x</button>`;
+    row.querySelector("button").onclick=()=>removeFromCart(i);
+    miniList.appendChild(row);
+  });
+  miniCount.textContent=cart.length;
+  miniTotal.textContent=total;
+
+  // full cart
+  cartItems.innerHTML="";
+  cart.forEach((it,i)=>{
+    const div=document.createElement("div");
+    div.className="cartItem";
+    div.innerHTML=`<span>${it.name} — $${it.price}</span><button>Remove</button>`;
+    div.querySelector("button").onclick=()=>removeFromCart(i);
+    cartItems.appendChild(div);
+  });
+  cartTotal.textContent=total;
+}
+
+// ====== Global Search (across all platforms) ======
+document.getElementById("searchBar").addEventListener("input",e=>{
+  const q=e.target.value.toLowerCase();
+  show("screen-shop"); // jump to shop to see results
+  document.body.className=""; // neutral background on global results
+  currentConsole=null;
+  renderConsoleButtons();
+
+  if(!q){ grid.innerHTML="<div class='panel'>Type to search, or pick a console above.</div>"; return; }
+
+  grid.innerHTML="";
+  catalog.forEach((items,platform)=>{
+    items.forEach(item=>{
+      if(item.name.toLowerCase().includes(q)){
+        const card=document.createElement("div");
+        card.className="card";
+        card.innerHTML=`${imgTag(item.img,item.name)}<div class='meta'>
+          <div class='title'>${item.name}</div>
+          <div class='muted'><span class='pill'>${platform}</span> • ${item.type==="game"?item.genre:"Hardware"} • ${item.year}</div>
+          <div class='price'>$${item.price}</div>
+          <button class='add'>Add to Cart</button>
+        </div>`;
+        card.querySelector(".add").onclick=()=>addToCart(item);
+        grid.appendChild(card);
+      }
+    });
+  });
+  if(!grid.children.length){
+    grid.innerHTML="<div class='panel'><b>No results found.</b> Try another term.</div>";
+  }
+});
+
+// ====== Chatbot ======
+const chatBtn=document.getElementById("openChat"),chatBox=document.getElementById("chat"),chatlog=document.getElementById("chatlog");
+chatBtn.onclick=()=>chatBox.style.display=chatBox.style.display==="flex"?"none":"flex";
+function addMsg(t,w="bot"){const d=document.createElement("div");d.className="msg "+(w==="me"?"me":"bot");d.textContent=t;chatlog.appendChild(d);chatlog.scrollTop=chatlog.scrollHeight;}
+function botReply(q){
+  const msg=q.toLowerCase();
+  if(msg.includes("price")) return "Use the Min/Max $ filters on the Shop screen.";
+  if(msg.includes("genre")) return "Pick a console, then set Genre (RPG, Shooter, etc.).";
+  if(msg.includes("recommend")) return "Try Elden Ring (RPG), Forza Horizon 5 (Racing), or Helldivers 2 (Shooter).";
+  if(["ps5","xbox","switch","pc"].some(k=>msg.includes(k))){
+    const c = msg.includes("ps5")?"PS5": msg.includes("xbox")?"Xbox Series X|S": msg.includes("switch")?"Switch":"PC";
+    show("screen-shop"); currentConsole=c; setBackground(c); renderConsoleButtons(); renderCatalog();
+    return `Opening ${c} for you 👌`;
+  }
+  if(msg.includes("cart")) return "Your cart updates live in the header and the right mini panel.";
+  return "I can help with consoles, genres, filters, recommendations, and cart.";
+}
+document.getElementById("chatForm").onsubmit=e=>{
+  e.preventDefault();
+  const input=document.getElementById("chatInput");
+  const text=input.value.trim(); if(!text) return;
+  addMsg(text,"me"); addMsg(botReply(text),"bot"); input.value="";
+};
+</script>
+</body>
+</html>

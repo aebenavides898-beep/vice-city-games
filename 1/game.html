@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Tactics — Pre-Rendered Maps + Arrow Keys</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root{
+    --ink:#e5e7eb; --muted:#9aa5b1; --panel:#0f172a; --line:#334155; --bg:#0a0e17;
+  }
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+  #wrap{max-width:1140px;margin:18px auto;padding:12px}
+  h2{margin:6px 0 8px}
+  .muted{color:var(--muted)}
+  .btn{padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--ink);cursor:pointer}
+  .btn:hover{filter:brightness(1.08)}
+  .pill{padding:4px 10px;border-radius:999px;background:var(--panel);border:1px solid var(--line)}
+  .ui{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:8px}
+
+  /* Board */
+  #board{margin:10px 0}
+  table{border-collapse:collapse; background-size:cover; background-position:center; background-repeat:no-repeat;}
+  td{
+    width:40px;height:40px;text-align:center;vertical-align:middle;
+    border:1px solid #93a0b3;font-size:22px;font-weight:700;position:relative;line-height:1;
+    text-shadow:0 1px 0 #0008, 0 0 4px #000a;
+  }
+
+  /* Player sprite image */
+  .entity-img{
+    width:32px;height:32px;image-rendering:pixelated;
+    pointer-events:none;
+    filter: drop-shadow(0 1px 0 #0008) drop-shadow(0 0 3px #000a);
+  }
+
+  /* Class select overlay */
+  #classSelect{position:fixed;inset:0;background:
+      radial-gradient(80% 60% at 50% 40%, rgba(155,135,245,.14), transparent 60%),
+      radial-gradient(80% 60% at 50% 60%, rgba(194,163,106,.14), transparent 60%),
+      linear-gradient(180deg,#0a0e17,#05070d);
+    display:flex;align-items:center;justify-content:center;padding:24px;z-index:50}
+  .select-panel{max-width:1100px;width:100%;background:#0b1220;border:1px solid #273245;border-radius:16px;padding:18px;box-shadow:0 12px 40px rgba(0,0,0,.45)}
+  .select-grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));margin-top:10px}
+  .card{background:#0f172a;border:1px solid #273245;border-radius:14px;padding:12px;cursor:pointer;transition:transform .05s,box-shadow .2s,border-color .2s}
+  .card:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(0,0,0,.35);border-color:#3b82f6}
+  .card.active{outline:2px solid #3b82f6;box-shadow:0 0 0 4px rgba(59,130,246,.25)}
+  .card h3{margin:0 0 6px}
+  .tag{background:#0b1220;border:1px solid #334155;border-radius:999px;padding:2px 8px;font-size:12px;margin-right:6px}
+  .footer-select{display:flex;justify-content:space-between;align-items:center;margin-top:12px}
+</style>
+</head>
+<body>
+<!-- Class selection -->
+<div id="classSelect">
+  <div class="select-panel">
+    <h2>Select Your Calling</h2>
+    <div class="muted">Choose a leader. Only the leader’s passive is active. One of your pre-rendered maps will be chosen randomly.</div>
+    <div id="cards" class="select-grid"></div>
+    <div class="footer-select">
+      <div class="muted" id="choiceHint">No class selected.</div>
+      <button id="startBtn" class="btn" disabled>Begin the Journey</button>
+    </div>
+  </div>
+</div>
+
+<div id="wrap">
+  <h2>Tactics — Pre-Rendered Maps</h2>
+  <p class="muted">Use <b>Arrow Keys</b>. Background is a pre-made map image. Grid entities (🪨 rocks/obstacles, 🫂 allies, ⚔️ weapons, 💎 treasure, ⚠️ traps, enemies 🐍/🐺/🦂/👹) still spawn each match.</p>
+
+  <div id="board"></div>
+
+  <div class="ui">
+    <button class="btn" onclick="newMatch()">New Match</button>
+    <span id="msg" class="pill">Explore the map.</span>
+    <span class="pill">Score: <span id="score">0</span></span>
+    <span class="pill">Treasure left: <span id="left">0</span></span>
+    <span class="pill">HP: <span id="hp">0</span>/<span id="hpMax">0</span></span>
+    <span class="pill">ATK: <span id="atk">0</span></span>
+    <span class="pill">Allies: <span id="allyCount">0</span></span>
+    <span class="pill">Turn: <span id="turn">0</span></span>
+  </div>
+</div>
+
+<script>
+/* =======================
+   0) SETUP — where your maps live
+   ======================= */
+/* If you saved your three maps in a folder named "maps", use paths like "maps/easy-map3.png".
+   If you saved them in "tiles", change the strings below to "tiles/yourfile.png". */
+const MAP_IMAGES = [
+  "maps/easy-map3.png",
+  "maps/easy-map5.png",
+  "maps/easy-map7.png"
+];
+
+/* =======================
+   1) CLASSES (SPRITES + PASSIVES)
+   ======================= */
+const STARTER_CLASSES = [
+  { key:"Warrior", name:"Warrior", sprite:"tiles/warrior.png", hpMax:20, hp:20, atk:6, def:3, allies:0, passive:"warrior" },
+  { key:"Rogue",   name:"Rogue",   sprite:"tiles/rogue.png",   hpMax:14, hp:14, atk:5, def:1, allies:1, passive:"rogue" },
+  { key:"Mage",    name:"Mage",    sprite:"tiles/mage.png",    hpMax:12, hp:12, atk:8, def:0, allies:0, passive:"mage", mpMax:5, mp:5 },
+  { key:"Cleric",  name:"Cleric",  sprite:"tiles/cleric.png",  hpMax:18, hp:18, atk:4, def:2, allies:0, passive:"cleric", mpMax:3, mp:3 },
+  { key:"Wretch",  name:"Wretch",  sprite:"tiles/wretch.png",  hpMax:10, hp:10, atk:3, def:0, allies:0, passive:"wretch" }
+];
+let LEADER=null, SPRITE="", stats={};
+
+const cardsWrap = document.getElementById('cards');
+STARTER_CLASSES.forEach(cls=>{
+  const card = document.createElement('div');
+  card.className='card';
+  card.innerHTML = `
+    <h3>${cls.name}</h3>
+    <div class="muted">Passive: ${
+      cls.key==='Warrior'?'Iron Skin (−1 dmg)':
+      cls.key==='Rogue'?'Shadowstep (trap immune)':
+      cls.key==='Mage'?'+1 MP each round':
+      cls.key==='Cleric'?'Heal +2 each round':
+      'Desperate Growth (+1 XP on win)'
+    }</div>
+    <div style="margin:8px 0">
+      <span class="tag">HP ${cls.hpMax}</span>
+      <span class="tag">ATK ${cls.atk}</span>
+      <span class="tag">DEF ${cls.def||0}</span>
+      ${cls.mpMax?`<span class="tag">MP ${cls.mpMax}</span>`:''}
+      ${cls.allies?`<span class="tag">Allies +${cls.allies}</span>`:''}
+    </div>`;
+  card.addEventListener('click', ()=>{
+    document.querySelectorAll('.card').forEach(x=>x.classList.remove('active'));
+    card.classList.add('active');
+    LEADER = cls.key; SPRITE = cls.sprite;
+    stats = { hpMax:cls.hpMax, hp:cls.hp, atk:cls.atk, def:cls.def||0, allies:cls.allies||0, mpMax:cls.mpMax||0, mp:cls.mp||0, xp:0, xpNext:10, lv:1, passive:cls.passive };
+    document.getElementById('choiceHint').textContent = `Selected: ${cls.name}`;
+    document.getElementById('startBtn').disabled = false;
+  });
+  cardsWrap.appendChild(card);
+});
+document.getElementById('startBtn').addEventListener('click', ()=>{
+  if (!LEADER) return;
+  document.getElementById('classSelect').style.display='none';
+  newMatch();
+});
+
+/* =======================
+   2) SIMPLE GRID ENTITIES
+   ======================= */
+// Entity codes: 0 empty, 1 rock, 2 player, 3 enemy, 4 treasure, 5 trap, 6 weapon, 7 ally
+const E_EMPTY=0, E_ROCK=1, E_PLAYER=2, E_ENEMY=3, E_TREASURE=4, E_TRAP=5, E_WEAPON=6, E_ALLY=7;
+
+const N=16; // grid is 16×16 to match typical tiles
+let grid, player={r:0,c:0};
+let treasuresLeft=0, score=0, turnCount=0, inCombat=false;
+let currentMapImage = MAP_IMAGES[0];
+
+function rnd(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+function inside(r,c){ return r>=0 && r<N && c>=0 && c<N; }
+function makeMatrix(fill=0){ const m=[]; for(let r=0;r<N;r++) m.push(new Array(N).fill(fill)); return m; }
+
+/* =======================
+   3) RENDER
+   ======================= */
+function entityHTML(eCode){
+  if (eCode===E_EMPTY) return '';
+  if (eCode===E_ROCK) return '🪨';
+  if (eCode===E_TREASURE) return '💎';
+  if (eCode===E_TRAP) return '⚠️';
+  if (eCode===E_WEAPON) return '⚔️';
+  if (eCode===E_ALLY) return '🫂';
+  if (eCode===E_PLAYER) return `<img class="entity-img" src="${SPRITE}" alt="hero">`;
+  if (eCode===E_ENEMY){
+    // Use a mix of enemy icons for flavor
+    const icons = ['🐍','🐺','🦂','👹'];
+    return icons[rnd(0,icons.length-1)];
+  }
+  return '';
+}
+function render(){
+  const out=[];
+  out.push(`<table style="background-image:url('${currentMapImage}')">`);
+  for(let r=0;r<N;r++){
+    out.push('<tr>');
+    for(let c=0;c<N;c++){
+      const e=grid[r][c];
+      out.push(`<td>${entityHTML(e)}</td>`);
+    }
+    out.push('</tr>');
+  }
+  out.push('</table>');
+  document.getElementById('board').innerHTML=out.join('');
+  ui();
+}
+
+/* =======================
+   4) UI
+   ======================= */
+function setMsg(s){ document.getElementById('msg').textContent=s; }
+function ui(){
+  document.getElementById('score').textContent=score;
+  document.getElementById('left').textContent=treasuresLeft;
+  document.getElementById('hp').textContent=stats.hp;
+  document.getElementById('hpMax').textContent=stats.hpMax;
+  document.getElementById('atk').textContent=stats.atk;
+  document.getElementById('allyCount').textContent=stats.allies;
+  document.getElementById('turn').textContent=turnCount;
+}
+
+/* =======================
+   5) GAMEPLAY
+   ======================= */
+function addXP(n){
+  stats.xp += n;
+  if (stats.passive==='wretch' && n>0) stats.xp += 1;
+  while(stats.xp >= stats.xpNext){
+    stats.xp -= stats.xpNext; stats.lv++;
+    stats.hpMax += 3; stats.atk += 1; stats.def = (stats.def||0)+1;
+    if (stats.mpMax) stats.mpMax += 1;
+    stats.hp = Math.min(stats.hpMax, stats.hp + 5);
+    stats.xpNext = Math.round(stats.xpNext * 1.5);
+    setMsg(`Level up! LV ${stats.lv}`);
+  }
+}
+function placeManyRandom(m, code, count){
+  let placed=0, guard=0;
+  while(placed<count && guard<30000){
+    guard++;
+    const r=rnd(0,N-1), c=rnd(0,N-1);
+    if (m[r][c]===E_EMPTY){ m[r][c]=code; placed++; }
+  }
+}
+function placePlayer(m){
+  while(true){
+    const r=rnd(0,N-1), c=rnd(0,N-1);
+    if (m[r][c]===E_EMPTY){ m[r][c]=E_PLAYER; player={r,c}; return; }
+  }
+}
+
+function newMatch(){
+  inCombat=false; turnCount=0; score=0; treasuresLeft=12;
+
+  // Pick one of your saved maps at random
+  currentMapImage = MAP_IMAGES[rnd(0, MAP_IMAGES.length-1)];
+
+  grid = makeMatrix(E_EMPTY);
+  placePlayer(grid);
+  placeManyRandom(grid, E_ROCK,     28);
+  placeManyRandom(grid, E_ENEMY,    12);
+  placeManyRandom(grid, E_TREASURE, treasuresLeft);
+  placeManyRandom(grid, E_TRAP,     10);
+  placeManyRandom(grid, E_WEAPON,    6);
+  placeManyRandom(grid, E_ALLY,      5);
+
+  stats.hp=Math.min(stats.hpMax, stats.hp);
+  if (stats.mpMax) stats.mp=Math.min(stats.mpMax, stats.mp||0);
+
+  window.onkeydown = handleArrows; // arrows only
+  setMsg('Exploring a pre-rendered map.');
+  render();
+}
+
+function tryMovePlayer(dr,dc){
+  if (inCombat) return;
+  const nr=player.r+dr, nc=player.c+dc;
+  if (!inside(nr,nc)) return;
+
+  const e=grid[nr][nc];
+  // rocks block
+  if (e===E_ROCK){ setMsg('A rock blocks your path.'); return; }
+
+  // Interactions
+  if (e===E_TREASURE){ score++; treasuresLeft--; addXP(2); setMsg('You found treasure! (+2 XP)'); }
+  if (e===E_WEAPON){ stats.atk++; addXP(1); setMsg('You found a weapon! ATK +1 (+1 XP)'); }
+  if (e===E_ALLY){ stats.allies=Math.min(3, stats.allies+1); addXP(1); setMsg('An ally joins you! (+1 XP)'); }
+  if (e===E_TRAP){
+    if (stats.passive==='rogue'){ setMsg('Shadowstep — trap ignored.'); }
+    else {
+      const dmg=rnd(2,4); stats.hp=Math.max(0, stats.hp-dmg); setMsg(`Trap! You take ${dmg} damage.`);
+    }
+  }
+  if (e===E_ENEMY){
+    // quick bump-combat
+    inCombat=true;
+    const enemyHP=rnd(6,10);
+    const yourHit = stats.atk + (stats.allies ? rnd(1,2)*stats.allies : 0);
+    if (yourHit >= enemyHP){
+      addXP(5);
+      setMsg(`You defeat the foe! (+5${stats.passive==='wretch'?'+1':''} XP)`);
+    } else {
+      let dmg=rnd(2,5);
+      if (stats.passive==='warrior') dmg=Math.max(1,dmg-1);
+      stats.hp=Math.max(0, stats.hp-dmg);
+      setMsg(`The foe wounds you for ${dmg}.`);
+    }
+    inCombat=false;
+  }
+
+  // Move player
+  grid[player.r][player.c]=E_EMPTY;
+  grid[nr][nc]=E_PLAYER;
+  player={r:nr,c:nc};
+
+  // Enemies step (global turn advances)
+  turnCount++;
+  enemiesStep();
+
+  if (treasuresLeft===0) setMsg('All treasures collected! 🎉');
+  render();
+}
+
+function enemiesStep(){
+  const list=[];
+  for(let r=0;r<N;r++) for(let c=0;c<N;c++) if (grid[r][c]===E_ENEMY) list.push({r,c});
+
+  for(const e of list){
+    if (grid[e.r][e.c]!==E_ENEMY) continue; // already moved
+
+    // greedy step toward player
+    const dr=Math.sign(player.r-e.r), dc=Math.sign(player.c-e.c);
+    const opts=[];
+    if (Math.abs(player.r-e.r)>=Math.abs(player.c-e.c)){
+      if (dr) opts.push({r:e.r+dr,c:e.c});
+      if (dc) opts.push({r:e.r,c:e.c+dc});
+    } else {
+      if (dc) opts.push({r:e.r,c:e.c+dc});
+      if (dr) opts.push({r:e.r+dr,c:e.c});
+    }
+
+    for(const o of opts){
+      if (!inside(o.r,o.c)) continue;
+      const g=grid[o.r][o.c];
+      if (g===E_ROCK || g===E_ENEMY) continue;
+
+      if (g===E_PLAYER){
+        let dmg=rnd(1,4);
+        if (stats.passive==='warrior') dmg=Math.max(1,dmg-1);
+        stats.hp=Math.max(0, stats.hp-dmg);
+        setMsg(`An enemy strikes you for ${dmg}.`);
+        grid[e.r][e.c]=E_EMPTY; // remove attacker (lunge/withdraw)
+        break;
+      }
+
+      grid[e.r][e.c]=E_EMPTY;
+      grid[o.r][o.c]=E_ENEMY;
+      break;
+    }
+  }
+}
+
+/* =======================
+   6) INPUT — ARROW KEYS ONLY
+   ======================= */
+function handleArrows(e){
+  const k=e.key;
+  if (k==='ArrowUp')    tryMovePlayer(-1,0);
+  if (k==='ArrowDown')  tryMovePlayer( 1,0);
+  if (k==='ArrowLeft')  tryMovePlayer(0,-1);
+  if (k==='ArrowRight') tryMovePlayer(0, 1);
+}
+</script>
+</body>
+</html>

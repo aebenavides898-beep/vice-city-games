@@ -1,0 +1,481 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>RPG Character Creator — Core Tri-Stat Classes (Map)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#231a12; --ink-fade:#4f3e2e; --burn:#5c2f13;
+    --parch-1:#f5ecd4; --parch-2:#efe1bb; --parch-3:#e2cf9a;
+    --line:#8f764e; --accent:#7b5a2b; --ok:#2f6f3a; --warn:#8d2a2a;
+  }
+  html,body{height:100%}
+  body{
+    margin:0; color:var(--ink); font-family: "IM Fell English", Georgia, serif;
+    background: radial-gradient(80vw 60vh at 50% 50%, rgba(0,0,0,.15), rgba(0,0,0,.8) 70%), #000;
+  }
+  .page{
+    max-width:1080px; margin:28px auto; padding:20px; position:relative;
+    background:
+      radial-gradient(120px 40px at 50% -10%, rgba(80,40,15,.12), transparent 60%),
+      radial-gradient(120px 40px at 50% 110%, rgba(80,40,15,.12), transparent 60%),
+      linear-gradient(95deg, rgba(150,120,80,.15) 0, transparent 10% 90%, rgba(150,120,80,.1) 100%),
+      repeating-linear-gradient(0deg, rgba(139,111,79,.06) 0 26px, rgba(139,111,79,.09) 26px 52px),
+      radial-gradient(18rem 10rem at 15% 20%, rgba(90,40,10,.06), transparent 60%),
+      radial-gradient(14rem 8rem at 85% 70%, rgba(120,60,20,.05), transparent 60%),
+      linear-gradient(180deg, var(--parch-1), var(--parch-2) 55%, var(--parch-3));
+    border: 3px solid #6d5530; border-radius: 18px;
+    box-shadow: 0 8px 28px rgba(0,0,0,.55), inset 0 0 0 2px rgba(255,255,255,.08);
+  }
+  .page::before{
+    content:""; position:absolute; inset:-10px; border-radius:22px; pointer-events:none;
+    background:
+      radial-gradient(100% 20px at 10% 0, rgba(0,0,0,.16), transparent 60%),
+      radial-gradient(100% 20px at 90% 100%, rgba(0,0,0,.18), transparent 60%),
+      radial-gradient(40px 140px at 0 30%, rgba(0,0,0,.25), transparent 60%),
+      radial-gradient(40px 140px at 100% 60%, rgba(0,0,0,.25), transparent 60%);
+    filter: blur(2px);
+  }
+  .page::after{
+    content:""; position:absolute; inset:0; border-radius:16px; pointer-events:none;
+    box-shadow: inset 0 0 80px rgba(0,0,0,.18), inset 0 0 18px rgba(92,47,19,.25);
+  }
+  h1{
+    font-family:"Cinzel", serif; font-weight:900; letter-spacing:.04em;
+    color:#3d2816; text-align:center; margin:0 0 8px;
+    text-shadow: 0 1px 0 #fff, 0 0 12px rgba(182,147,84,.25);
+  }
+  .subtitle{ text-align:center; color:var(--ink-fade); font-style:italic; margin:0 0 14px }
+  .grid{ display:grid; gap:18px; grid-template-columns:1.1fr .9fr }
+  @media (max-width:900px){ .grid{ grid-template-columns:1fr } }
+  .panel{
+    position:relative; border:2px solid var(--line); border-radius:14px; padding:14px;
+    background: linear-gradient(180deg, rgba(255,255,255,.3), rgba(255,255,255,.06)), #f7ebc9;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,.06), 0 6px 18px rgba(0,0,0,.15);
+  }
+  .panel::before{
+    content:""; position:absolute; inset:6px; border-radius:10px; pointer-events:none;
+    background:
+      radial-gradient(30px 12px at 10% 6%, rgba(80,40,10,.12), transparent 60%),
+      radial-gradient(30px 12px at 90% 94%, rgba(80,40,10,.12), transparent 60%);
+  }
+  .divider{ height:18px; margin:12px 0; position:relative; background:linear-gradient(90deg, transparent, rgba(0,0,0,.25), transparent) }
+  .divider::after{
+    content:"ᚠᚱᚨᚷᚷᛖᛏ";
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-family:"Cinzel", serif; font-weight:700; letter-spacing:.25em; font-size:12px;
+    color:rgba(50,30,10,.55); text-shadow:0 1px 0 #fef8e5;
+  }
+  label{display:flex; align-items:center; justify-content:space-between; gap:12px; margin:6px 0}
+  input[type="text"]{
+    flex:1; max-width:320px; padding:8px 10px; border-radius:10px; border:1px solid #b89a66;
+    background:#fbf4da; color:var(--ink); box-shadow: inset 0 1px 0 rgba(255,255,255,.7);
+    font-family:"IM Fell English", serif;
+  }
+  .row{display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+  .stat{
+    display:flex; align-items:center; justify-content:space-between; gap:8px;
+    padding:8px 10px; border:1px solid rgba(0,0,0,.12); border-radius:10px; background:#fcf6e3;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.5);
+  }
+  .name{min-width:120px; font-weight:700; color:#3a2c1d; font-family:"Cinzel", serif}
+  button{
+    padding:8px 12px; border:1px solid #5f4723; border-radius:10px; cursor:pointer;
+    font-weight:700; font-family:"Cinzel", serif; letter-spacing:.02em;
+    background: linear-gradient(180deg, #f2dfb7, #e5cd97);
+    color:#3a2c1d; box-shadow: 0 2px 0 rgba(0,0,0,.18), inset 0 1px 0 #fff;
+    transition: transform .05s ease, filter .15s ease;
+  }
+  button:hover{ filter:brightness(1.05) } button:active{ transform: translateY(1px) }
+  .pill{
+    display:inline-block; padding:4px 10px; border-radius:999px; border:1px solid #bda06e;
+    background:#efe0b9; font-weight:700; font-family:"Cinzel", serif;
+  }
+  .pill.ok{ border-color: var(--ok); background:#e6f1e6; color:#18421f }
+  .pill.warn{ border-color: var(--warn); background:#f6e3e3; color:#4a1d1d }
+  .muted{ color:var(--ink-fade); font-size:14px }
+  .danger{ color:var(--warn); font-weight:700 }
+  pre{
+    white-space:pre-wrap; background:#fbf4da; border:1px solid rgba(0,0,0,.12); border-radius:12px; padding:12px;
+    box-shadow: inset 0 0 14px rgba(0,0,0,.05);
+    font-family:"IM Fell English", serif; font-size:15px; color:#2c1f15;
+  }
+  .seal{
+    display:inline-block; background:radial-gradient(circle at 30% 30%, #df8, #b63a3a 60%, #7e2323);
+    border:2px solid #8a2424; color:#fff; padding:6px 10px; border-radius:50%;
+    box-shadow: inset 0 0 8px rgba(0,0,0,.25), 0 3px 8px rgba(0,0,0,.2);
+    font-weight:900; font-variant: small-caps; letter-spacing:.5px;
+  }
+  .loreTitle{ margin:.2rem 0 .4rem; font-weight:800; color:#3a2c1d; font-family:"Cinzel", serif }
+  .loreBox{
+    margin-top:8px; padding:12px; border:1px solid rgba(0,0,0,.12); border-radius:12px; background:#fcf6e2;
+    box-shadow: inset 0 0 12px rgba(0,0,0,.05);
+  }
+</style>
+</head>
+<body>
+  <div class="page">
+    <h1>Character Creation Scroll</h1>
+    <div class="subtitle">Distribute 10 points. Your calling reveals itself as you spend.</div>
+
+    <div class="grid">
+      <div class="panel">
+        <label>Adventurer Name:
+          <input id="name" type="text" placeholder="Andres" />
+        </label>
+
+        <div class="divider"></div>
+
+        <p>
+          Points Remaining:
+          <span id="left" class="pill ok">10</span>
+          <span id="over" class="pill warn" style="display:none">Over the limit</span>
+        </p>
+
+        <div id="statsBox"></div>
+
+        <div class="divider"></div>
+
+        <div class="row">
+          <button id="resetBtn">Reset</button>
+          <button id="createBtn">Create Character</button>
+          <span id="error" class="danger"></span>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:10px">
+          <h3 style="margin:0; font-family:'Cinzel',serif">Live Class</h3>
+          <span class="seal" title="Guild Seal">★</span>
+        </div>
+        <p class="muted" style="margin-top:2px">Changes as you adjust the stats on the left.</p>
+
+<pre id="preview">Class: Commoner
+Name: (enter a name)
+Level: 1 (XP 0)
+
+Allocated Stats:
+  - HP: 0
+  - MP: 0
+  - Stamina: 0
+  - Strength: 0
+  - Finesse: 0
+  - Intelligence: 0
+  - Faith: 0
+  - Luck: 0
+
+Points used: 0 / 10</pre>
+
+        <div class="loreBox">
+          <div class="loreTitle" id="loreTitle">Class Lore: Commoner</div>
+          <div id="loreText" class="muted">
+            The pitiful wretch, stripped of blessing, of gift, of place. Neither blade nor prayer to their name, they stumble naked into a world that hungers. They may walk any road, yet each step is agony. A soul without purpose, a body without grace. Truly, a pitiful being.
+            <br><br><b>Gifts:</b> none; freedom to shape one's path. <b>Afflictions:</b> every foe a mountain; begins with nothing.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* ===== 0) Constants ===== */
+const STAT_NAMES = ["HP","MP","Stamina","Strength","Finesse","Intelligence","Faith","Luck"];
+const CORE = new Set(["Strength","Finesse","Intelligence","Faith","Luck"]);
+const MAX_POINTS = 10;
+
+/* ===== 1) DOM ===== */
+const inputsMap = new Map();
+const nameEl = document.getElementById("name");
+const leftEl = document.getElementById("left");
+const overEl = document.getElementById("over");
+const errEl = document.getElementById("error");
+const preview = document.getElementById("preview");
+const statsBox = document.getElementById("statsBox");
+const resetBtn = document.getElementById("resetBtn");
+const createBtn = document.getElementById("createBtn");
+const loreTitle = document.getElementById("loreTitle");
+const loreText = document.getElementById("loreText");
+
+/* ===== 2) Render stat rows ===== */
+STAT_NAMES.forEach(stat => {
+  const row = document.createElement("div"); row.className = "stat";
+  const label = document.createElement("div"); label.className = "name"; label.textContent = stat;
+  const minus = document.createElement("button"); minus.textContent = "−";
+  const input = document.createElement("input");
+  input.type = "number"; input.min = "0"; input.step = "1"; input.value = "0"; input.style.width = "74px";
+  const plus  = document.createElement("button"); plus.textContent = "+";
+
+  minus.addEventListener("click", () => { input.value = String(Math.max(0, Number(input.value||0) - 1)); updateAll(); });
+  plus .addEventListener("click", () => { input.value = String(Number(input.value||0) + 1); updateAll(); });
+  input.addEventListener("input", updateAll);
+
+  row.appendChild(label); row.appendChild(minus); row.appendChild(input); row.appendChild(plus);
+  statsBox.appendChild(row);
+  inputsMap.set(stat, input);
+});
+
+/* ===== 3) Helpers ===== */
+function getAllocMap(){
+  const m = new Map();
+  for (const n of STAT_NAMES) m.set(n, Number(inputsMap.get(n).value || 0));
+  return m;
+}
+function sumAllocMap(m){ let s = 0; for(const n of STAT_NAMES) s += m.get(n); return s; }
+
+/* ===== 4) Base class rules (single & pair) ===== */
+const singleMap = new Map(Object.entries({
+  Strength:"Warrior", Finesse:"Rogue", Intelligence:"Mage", Faith:"Cleric",
+  HP:"Guardian", MP:"Channeler", Stamina:"Ranger", Luck:"Gambler"
+}));
+const hybridMap = new Map(Object.entries({
+  "Faith+Strength":"Paladin",
+  "Finesse+Intelligence":"Arcane Trickster",
+  "Intelligence+Strength":"Spellsword",
+  "Finesse+Strength":"Duelist",
+  "Faith+Finesse":"Inquisitor",
+  "Faith+Intelligence":"Thaumaturge",
+  "HP+Strength":"Warden", "HP+Finesse":"Sentinel", "HP+Intelligence":"Battlemind", "HP+Faith":"Crusader",
+  "MP+Intelligence":"Sorcerer", "MP+Faith":"Priest", "MP+Strength":"Battle Channeler", "MP+Finesse":"Spell Dancer",
+  "Stamina+Strength":"Berserker", "Stamina+Finesse":"Skirmisher", "Stamina+Intelligence":"Tactician", "Stamina+Faith":"Monk",
+  "Luck+Strength":"Fortune Knight", "Luck+Finesse":"Swashbuckler", "Luck+Intelligence":"Occultist", "Luck+Faith":"Chosen"
+}));
+
+/* ===== 5) Core tri-stat classes (exactly 3-way ties among 5 core stats) ===== */
+const triCoreMap = new Map([
+  // S + F + I
+  [["Strength","Finesse","Intelligence"].sort().join("+"),
+    {
+      name: "Spellblade Duelist",
+      lore: "Blades that cut, minds that burn. They weave sorcery into swordplay, dancing between cunning and raw might. But mastery of three paths leaves them forever incomplete.\n\nGifts: versatile melee–magic hybrid; agile combat. Afflictions: fragile; lacks the peak of any single path."
+    }
+  ],
+  // S + F + Faith
+  [["Strength","Finesse","Faith"].sort().join("+"),
+    {
+      name: "Zealot Champion",
+      lore: "Frenzied disciples who strike with holy zeal. Their faith guides swift blades and righteous fury. Yet in serving both creed and combat, they lose the purity of either.\n\nGifts: buffs and healing woven into melee. Afflictions: weaker than true clerics; less deadly than true rogues."
+    }
+  ],
+  // S + F + Luck  -> Battlemage (your change)
+  [["Strength","Finesse","Luck"].sort().join("+"),
+    {
+      name: "Battlemage",
+      lore: "Brutes who lace their blades with reckless chance. They fight with a gambler’s flourish, steel guided by instinct and fate. Fortune makes them terrible to behold when blessed, but cursed when betrayed.\n\nGifts: agile melee empowered by luck; explosive crits; versatile offense. Afflictions: fragile; inconsistent damage; easily undone when fortune fades."
+    }
+  ],
+  // S + I + Faith
+  [["Strength","Intelligence","Faith"].sort().join("+"),
+    {
+      name: "Templar",
+      lore: "Knights who bind both scripture and sorcery to steel. They march as living bastions, wielding divine flame and arcane ward. Yet their burden is heavy, and they move as if shackled by creed itself.\n\nGifts: durable frontline caster; holy + arcane hybrid. Afflictions: slow; divided growth; easily swarmed."
+    }
+  ],
+  // S + I + Luck
+  [["Strength","Intelligence","Luck"].sort().join("+"),
+    {
+      name: "Hexblade",
+      lore: "Warriors who gamble with arcane pacts, twisting strength and spell through fortune’s lens. At times their cursed blades fell giants; at times, fate turns and their edge is dull.\n\nGifts: melee empowered by chaotic sorcery; lucky strikes. Afflictions: inconsistent; vulnerable when fortune deserts them."
+    }
+  ],
+  // S + Faith + Luck
+  [["Strength","Faith","Luck"].sort().join("+"),
+    {
+      name: "Oathbreaker",
+      lore: "Once bound to gods, now chained to chance. Their strength is great, their prayers still echo, yet they cast their lot with fickle fortune—beloved by none.\n\nGifts: self-sustain; heavy strikes; luck-touched miracles. Afflictions: erratic; slower than true warriors; weaker than true clerics."
+    }
+  ],
+  // F + I + Faith
+  [["Finesse","Intelligence","Faith"].sort().join("+"),
+    {
+      name: "Seer",
+      lore: "Those who glimpse the hidden threads of fate. Their blades are swift, their sorceries subtle, their prayers whispered to shadows. Graceful and terrible, yet one touch of steel ends the vision.\n\nGifts: agile hybrid caster with support. Afflictions: fragile; inconsistent offense; resource-hungry."
+    }
+  ],
+  // F + I + Luck
+  [["Finesse","Intelligence","Luck"].sort().join("+"),
+    {
+      name: "Trickster",
+      lore: "Illusionists and assassins whose every strike is a gamble. They confound senses, vanish in smoke, and cut when fate smiles—then choke when it does not.\n\nGifts: evasive; crit-heavy burst. Afflictions: fragile; unreliable when luck turns."
+    }
+  ],
+  // F + Faith + Luck
+  [["Finesse","Faith","Luck"].sort().join("+"),
+    {
+      name: "Matador",
+      lore: "Dancers of death who mock fate with every flourish. Faith steels their heart while luck guides the blade. One slip, one stumble—and the dance ends in red.\n\nGifts: evasive duelist; opportunistic crits. Afflictions: brittle under pressure; punished by attrition."
+    }
+  ],
+  // I + Faith + Luck
+  [["Intelligence","Faith","Luck"].sort().join("+"),
+    {
+      name: "Gambler",
+      lore: "Mystics who wager scripture and sorcery upon fortune’s whim. Feared not for certainty, but for chaos incarnate.\n\nGifts: miracle–sorcery weave; sudden bursts. Afflictions: frail; erratic; useless when fate goes cold."
+    }
+  ],
+]);
+
+/* ===== 6) Single/pair lore (and base Commoner + others) ===== */
+const classLore = new Map(Object.entries({
+  Commoner:
+    "The pitiful wretch, stripped of blessing, of gift, of place. Neither blade nor prayer to their name, they stumble naked into a world that hungers. They may walk any road, yet each step is agony. A soul without purpose, a body without grace. Truly, a pitiful being.\n\nGifts: none; freedom to shape one's path. Afflictions: every foe a mountain; begins with nothing.",
+  Warrior:
+    "Those who know naught but steel. Arms thick as oaken roots, blows that sunder shield and bone. Yet the unseen eludes them: sorcery, guile, and the arrow loosed from a distant ridge.\n\nGifts: immense melee might; mastery of heavy arms. Afflictions: slow to close distance; vulnerable to magic and range.",
+  Rogue:
+    "Vermin clothed in shadow—quick of hand, quicker of heart. They carve where armor parts and vanish where lanterns fail; but when the sun finds them, bone proves brittle.\n\nGifts: agility, evasion, grievous critical strikes. Afflictions: fragile when cornered; suffers versus armored ranks.",
+  Mage:
+    "Scholars damned to speak with flame, frost, and void. A single utterance rends the sky; a single misstep spills them like grain.\n\nGifts: massive ranged damage; devastating sorceries and control. Afflictions: frail body; undone when struck.",
+  Cleric:
+    "Zealots wrapped in scripture; wounds knit beneath their touch, rot flees their hymns. Yet gods lend little mercy to iron and fang.\n\nGifts: potent healing, protections, cleansing. Afflictions: meager offense; struggles to end battles swiftly.",
+  Guardian:
+    "Walls of flesh and stubborn will. They remain when all else falls—a fortress given legs, crawling inexorably onward.\n\nGifts: unmatched survivability; stalwart presence. Afflictions: feeble damage; slow resolutions.",
+  Channeler:
+    "Hollow vessels through whom essence surges. Veins alight, words a low thunder—power unceasing, while the shell holds.\n\nGifts: vast mana reserves; resource mastery. Afflictions: fragile frame; reliant on woven spellcraft.",
+  Ranger:
+    "Hunters of the long breath. When others gasp, they persist—pace steady, eyes unblinking. Yet bind their feet and the chase ends swiftly.\n\nGifts: tireless stamina, mobility, reliable pressure. Afflictions: weak to control, snares, suppression.",
+  Gambler:
+    "Blessed and cursed by fickle fate. Some nights the stars descend at a word; some dawns, steel slips and destiny laughs.\n\nGifts: chance of ruinous bursts; rare boons. Afflictions: inconsistent and unreliable.",
+  "Paladin":
+    "Knights sundered between scripture and steel. They bear the light as shield and the blade as sermon, mending the broken even as they stand the line.\n\nGifts: strong defense; self-healing; auras for allies. Afflictions: modest damage; divided growth.",
+  "Spellsword":
+    "They temper iron in sorcery—each cut crackles, each syllable bleeds. To kindle two fires is to feed both poorly.\n\nGifts: versatile mid-range; weapon–spell synergy. Afflictions: spread thin; demanding to master.",
+  "Arcane Trickster":
+    "Assassins of ink and shadow. Their daggers sing with sigils; their ambushes fall like storms. When boxed, glamour breaks.\n\nGifts: cunning control; sudden burst from stealth. Afflictions: fragile; fatal when timing fails.",
+  "Duelist":
+    "Bloodsport incarnate. In the hush of two blades they are sovereign; parry and riposte their liturgy—until the mob arrives.\n\nGifts: terrifying in single combat; mastery of counters. Afflictions: falters versus hordes; lacks reach.",
+  "Inquisitor":
+    "Faith honed into scourge. They sniff out heresy, unmake sorcery, and drag the damned to ash. Where no witch burns, zeal grasps smoke.\n\nGifts: anti-magic tools; withering debuffs. Afflictions: low raw damage; niche by nature.",
+  "Thaumaturge":
+    "Keepers of rites older than bone. They braid miracle and malediction, a balance few trust and fewer forgive.\n\nGifts: versatile support; dual schools of spellcraft. Afflictions: slow to rouse; fragile under blade.",
+  "Warden":
+    "Flesh as fortress, knuckles as cudgel. They stride through storms and do not yield—victories come late.\n\nGifts: durable striker; endurance under fire. Afflictions: limited versatility; slow conclusions.",
+  "Sentinel":
+    "Shadows that refuse to die—footwork and grit in stubborn union. They dance on the edge and do not fall—yet a dance is not an execution.\n\nGifts: evasive tanking; attrition mastery. Afflictions: poor burst; trouble finishing foes.",
+  "Battlemind":
+    "Mind and marrow bound, thought hammered into ward. Blows land like rain upon a roof; roofs sag in time.\n\nGifts: barriers, damage soak, battlefield anchor. Afflictions: ponderous; low mobility and pace.",
+  "Crusader":
+    "Cross in one hand, shield in the other; the nail upon which a line hangs. Their strike rings hollow as sermons to the deaf.\n\nGifts: team sustain; unyielding anchor. Afflictions: modest offense.",
+  "Sorcerer":
+    "Gluttons of essence, feasting until they burn. Cities fall at a gesture; afterward, so might they.\n\nGifts: unmatched spell devastation; sweeping AoE. Afflictions: mana-hungry; frail when pressed.",
+  "Priest":
+    "Tongues bled for miracles; poured out upon others until little remains.\n\nGifts: highest tiers of healing and sanctity. Afflictions: near-absent offense; martyr’s path.",
+  "Battle Channeler":
+    "Blood for magic, magic for blood. Each strike a tithe, each breath a bargain.\n\nGifts: empowered weapon blows; unique resource scaling. Afflictions: fragile if balance breaks; resource-intense.",
+  "Spell Dancer":
+    "A blur of blade and glyph; beauty in motion, ruin in a single misstep.\n\nGifts: fluid weaving of strikes and spells; lethal windows. Afflictions: delicate; unforgiving to error.",
+  "Berserker":
+    "Beasts in human skin—rage without bottom, breath without end. Patience slays them where steel cannot.\n\nGifts: sustained melee pressure; thrives in long fights. Afflictions: predictable; kiteable.",
+  "Skirmisher":
+    "Hunters of opportunity—strike, fade, return. Smoke given purpose.\n\nGifts: extreme mobility; hit-and-run mastery. Afflictions: crumples under control; fragile when caught.",
+  "Tactician":
+    "Their war is time: cooldowns bent, positions traded, losses taken now to win later. Raw power answers to none of it.\n\nGifts: cooldown control; battlefield schemes. Afflictions: poor raw scaling; weak when plans fail.",
+  "Monk":
+    "Ascetics who temper sinew with prayer. They return the blow that found them, breath steady as scripture—yet iron and enchantment outpace humble ways.\n\nGifts: counters; self-discipline; endurance. Afflictions: modest burst; modest scaling.",
+  "Fortune Knight":
+    "Chained to the wheel of fate. Sometimes the wheel turns for them—sometimes it turns upon them.\n\nGifts: chance for staggering bursts; fate-kissed moments. Afflictions: unreliable; desertion by fortune.",
+  "Swashbuckler":
+    "Showmen who bleed for applause: crits like thunderclaps, footwork like rain. Then the storm passes; they stand in the open.\n\nGifts: crit chains; agile pressure. Afflictions: glassy in prolonged trades.",
+  "Occultist":
+    "Those who bargain with the dark between stars. Curses blossom from their whispers—upon foes, and sometimes themselves.\n\nGifts: chaos magic; proc-driven power. Afflictions: variance; self-risking rites.",
+  "Chosen":
+    "Claimed by powers unseen—saint or apostate, none can say. Miracles arrive as if by whim, and whim departs as it pleases.\n\nGifts: sudden divine boons; tide-turning moments. Afflictions: fickle; blessings as fleeting as mist."
+}));
+
+/* ===== 7) Decision logic ===== */
+function decideClassMap(alloc){
+  // max value
+  let max = -Infinity;
+  for (const n of STAT_NAMES) { const v = alloc.get(n); if (v > max) max = v; }
+  if (max <= 0) return "Commoner";
+
+  // which stats tie
+  const tops = STAT_NAMES.filter(n => alloc.get(n) === max);
+  const sortedKey = tops.slice().sort().join("+");
+
+  if (tops.length === 1) return singleMap.get(tops[0]) || "Commoner";
+  if (tops.length === 2) return hybridMap.get(sortedKey) || "Commoner";
+
+  if (tops.length === 3){
+    // If all three are in core set, try bespoke tri-core mapping
+    const allCore = tops.every(s => CORE.has(s));
+    if (allCore && triCoreMap.has(sortedKey)) {
+      return triCoreMap.get(sortedKey).name;
+    }
+    // Fallback: readable triune title for non-core mixes
+    return `Triune of ${tops.slice().sort().join(", ").replace(/, ([^,]*)$/, " & $1")}`;
+  }
+
+  // 4+ ties: broad fallback title
+  return "Path of Many (Unfocused)";
+}
+
+/* ===== 8) Live preview + lore ===== */
+function renderPreview(){
+  const name = (nameEl.value || "(enter a name)").trim();
+  const alloc = getAllocMap();
+  const used = sumAllocMap(alloc);
+  const clazz = decideClassMap(alloc);
+
+  const lines = [
+    `Class: ${clazz}`,
+    `Name: ${name}`,
+    `Level: 1 (XP 0)`,
+    "",
+    "Allocated Stats:"
+  ];
+  for (const n of STAT_NAMES) lines.push(`  - ${n}: ${alloc.get(n)}`);
+  lines.push("", `Points used: ${used} / ${MAX_POINTS}`);
+  preview.textContent = lines.join("\n");
+
+  // lore: try direct, then tri-core, then fallback
+  let lore = classLore.get(clazz);
+  if (!lore){
+    // Recompute tops to fetch tri-core lore if applicable
+    let max = -Infinity; for (const n of STAT_NAMES){ const v = alloc.get(n); if (v>max) max=v; }
+    const tops = STAT_NAMES.filter(n => alloc.get(n) === max).sort();
+    const key = tops.join("+");
+    if (tops.length === 3 && tops.every(s => CORE.has(s)) && triCoreMap.has(key)){
+      lore = triCoreMap.get(key).lore;
+    }
+  }
+  if (!lore){
+    lore = "A mysterious braid of paths, its gifts and afflictions yet unwritten.";
+  }
+  loreTitle.textContent = `Class Lore: ${clazz}`;
+  loreText.textContent = lore;
+}
+
+function updatePointsUI(){
+  const used = sumAllocMap(getAllocMap());
+  const left = MAX_POINTS - used;
+  leftEl.textContent = left;
+  const over = left < 0;
+  overEl.style.display = over ? "" : "none";
+  leftEl.className = "pill " + (over ? "warn" : "ok");
+  createBtn.disabled = over;
+  errEl.textContent = over ? "You used more than 10 points." : "";
+}
+function updateAll(){ updatePointsUI(); renderPreview(); }
+
+/* ===== 9) Actions ===== */
+function resetAll(){
+  nameEl.value = "";
+  for (const n of STAT_NAMES) inputsMap.get(n).value = "0";
+  updateAll();
+}
+function createCharacter(){
+  const used = sumAllocMap(getAllocMap());
+  if (used > MAX_POINTS){ errEl.textContent = "You used more than 10 points."; return; }
+  errEl.textContent = "";
+  alert("Character created!\n\n" + preview.textContent);
+}
+
+/* ===== 10) Events & first render ===== */
+nameEl.addEventListener("input", renderPreview);
+resetBtn.addEventListener("click", resetAll);
+createBtn.addEventListener("click", createCharacter);
+updateAll();
+</script>
+</body>
+</html>

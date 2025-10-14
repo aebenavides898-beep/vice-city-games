@@ -1,0 +1,623 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>MTG Deck Builder — 5-Color Theme + Curve + Limits</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  /* ========== 5-Color Mana Theme ========== */
+  :root{
+    /* Mana colors */
+    --W:#f8f5e3; --W-ink:#3b3420; --W-glow:rgba(248,245,227,.55);
+    --U:#7ec7ff; --U-ink:#0a2a4d; --U-glow:rgba(126,199,255,.45);
+    --B:#c2b7cc; --B-ink:#1b1322; --B-glow:rgba(194,183,204,.38);
+    --R:#ff9b8a; --R-ink:#3d1310; --R-glow:rgba(255,155,138,.42);
+    --G:#a6ffb4; --G-ink:#103418; --G-glow:rgba(166,255,180,.45);
+    --Waste:#cfe3f5; --Waste-ink:#0c1a2b; --Waste-glow:rgba(207,227,245,.35);
+
+    --panel: rgba(18,22,38,.78);
+    --panel-2: rgba(18,22,38,.90);
+    --stroke: rgba(255,255,255,.10);
+    --muted:#cfe3f5;
+
+    --btn: linear-gradient(180deg, #b7ecff, #58d9ff);
+    --btn-2: linear-gradient(180deg, #ffd2f3, #ff6fdd);
+    --btn-3: linear-gradient(180deg, #ffeaa8, #ffb970);
+
+    --accent: conic-gradient(from 0deg at 50% 50%, var(--W), var(--U), var(--B), var(--R), var(--G), var(--W));
+  }
+
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; color:#f7fbff;
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Helvetica Neue", sans-serif;
+    background:
+      radial-gradient(900px 600px at 15% -10%, rgba(126,199,255,.20), transparent 60%),
+      radial-gradient(900px 700px at 95% 110%, rgba(255,155,138,.18), transparent 60%),
+      linear-gradient(180deg, #12162a 0%, #0e1426 60%, #0b1020 100%);
+    overflow-x:hidden;
+  }
+  /* subtle grain */
+  body::before{
+    content:""; position:fixed; inset:0; pointer-events:none; z-index:-1;
+    background:
+      linear-gradient(0deg, rgba(255,255,255,.02), rgba(255,255,255,.02)),
+      repeating-linear-gradient(0deg, rgba(255,255,255,.02) 0 1px, transparent 1px 2px);
+    mix-blend-mode: overlay;
+  }
+
+  .container{ max-width:1200px; margin:28px auto; padding:0 16px; }
+  h1{margin:0 0 10px; font-weight:900; letter-spacing:.6px; font-size:28px}
+  .accent{ position:relative; display:inline-block; padding-bottom:10px; }
+  .accent::after{
+    content:""; position:absolute; left:0; right:0; bottom:0; height:6px; border-radius:6px;
+    background: var(--accent);
+    box-shadow: 0 0 24px var(--U-glow), 0 0 24px var(--R-glow), 0 0 24px var(--G-glow);
+  }
+  .muted{ color:var(--muted); margin:0 0 16px; }
+
+  /* Decorative 5-color border */
+  .ring{
+    position:relative; border-radius:16px; overflow:hidden;
+  }
+  .ring::before{
+    content:""; position:absolute; inset:-1px; padding:1px; border-radius:18px;
+    background: var(--accent);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor; mask-composite: exclude;
+  }
+
+  .grid{ display:grid; gap:18px; grid-template-columns: 1.1fr 1fr 1fr; }
+  @media (max-width: 1100px){ .grid{ grid-template-columns: 1fr; } }
+
+  .card{
+    background: var(--panel); border:1px solid var(--stroke); border-radius:16px;
+    padding:16px; backdrop-filter: blur(10px);
+    box-shadow: 0 8px 30px rgba(0,0,0,.25);
+  }
+  .card .header{
+    margin:-16px -16px 12px; padding:12px 16px; border-bottom:1px solid rgba(255,255,255,.12);
+    border-top-left-radius:16px; border-top-right-radius:16px;
+    background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,0));
+    color:#e9f4ff; font-weight:900;
+  }
+  h2{ margin:0; font-size:16px; }
+
+  /* Inputs / buttons */
+  label{display:block; margin:10px 0 6px; font-size:13px}
+  select,input,textarea{
+    width:100%; padding:11px 12px; border-radius:12px; color:#f7fbff;
+    background: var(--panel-2);
+    border:1px solid #2a3454; outline:none;
+    transition:border-color .15s, box-shadow .15s;
+  }
+  select:focus,input:focus,textarea:focus{ border-color:#7ec7ff; box-shadow:0 0 0 3px rgba(126,199,255,.18) }
+  textarea{ min-height:110px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; }
+
+  .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+  button{
+    padding:10px 14px; border:0; border-radius:12px; font-weight:900; letter-spacing:.3px;
+    color:#072026; background: var(--btn);
+    cursor:pointer; box-shadow: 0 8px 18px rgba(126,244,255,.22), inset 0 -8px 16px rgba(0,0,0,.25);
+    transition: transform .07s ease, filter .15s ease;
+  }
+  button:hover{ filter:brightness(1.07) }
+  button:active{ transform: translateY(1px) }
+  .secondary{ background: var(--btn-2); color:#2a0f25 }
+  .danger{ background: var(--btn-3); color:#3b1e00 }
+
+  table{width:100%; border-collapse:collapse; font-size:14px; overflow:hidden; border-radius:12px}
+  thead th{ background: linear-gradient(180deg, #141c36, #11182d); border-bottom:1px solid #243254; color:#e9f4ff; padding:10px; }
+  td{ border-bottom:1px solid #1d2948; padding:8px 10px; }
+  tfoot td{ background:#11182d; font-weight:800; }
+  .right{text-align:right}
+  .icon-btn{ padding:6px 10px; border-radius:10px; font-weight:800; background:#121a31; color:#ffdff7; border:1px solid #2c3456; cursor:pointer; }
+  .pill{ display:inline-block; padding:2px 8px; border-radius:999px; font-size:11px; font-weight:900; margin-left:6px; }
+  .cmc{ background:rgba(126,199,255,.2); border:1px solid rgba(126,199,255,.35) }
+  .type{ background:rgba(255,155,138,.2); border:1px solid rgba(255,155,138,.35) }
+
+  /* Chips (numbered) */
+  .chips{ display:flex; flex-wrap:wrap; gap:8px; margin:6px 0 10px; }
+  .chip{
+    display:inline-flex; align-items:center; gap:8px; padding:8px 12px; border-radius:999px; font-weight:800; font-size:12px;
+    border:1px solid #314068; background:#121a33; cursor:pointer; user-select:none; color:#e8f6ff;
+    transition: transform .06s ease, box-shadow .15s ease, border-color .15s ease, background .15s ease;
+  }
+  .chip.kbd{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; padding:2px 8px; border-radius:6px; background:#0c1326; border-color:#2a3456; }
+  .chip:hover{ transform: translateY(-1px); box-shadow:0 6px 18px rgba(122,252,255,.14) }
+  .chip.active{ border-color:#7ec7ff; background: linear-gradient(180deg, rgba(126,199,255,.14), rgba(126,199,255,.04)); }
+
+  /* === Mana curve bar chart === */
+  .curve{
+    display:flex; align-items:flex-end; gap:10px; height:160px; padding:8px 10px; border-radius:12px;
+    background:#0e1426; border:1px solid #223056;
+  }
+  .bar{
+    flex:1; min-width:22px; border-radius:8px 8px 4px 4px; position:relative; overflow:hidden;
+    background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.02));
+    border:1px solid rgba(255,255,255,.12);
+  }
+  .bar .fill{
+    position:absolute; left:0; right:0; bottom:0; height:0%;
+    background: linear-gradient(180deg, rgba(255,255,255,.20), rgba(255,255,255,.06));
+    box-shadow: inset 0 0 18px rgba(0,0,0,.35);
+    transition: height .25s ease;
+  }
+  /* color tints for each bucket, cycling W/U/B/R/G/Waste */
+  .b0 .fill{ background: linear-gradient(180deg, var(--W-glow), rgba(255,255,255,.06)); }
+  .b1 .fill{ background: linear-gradient(180deg, var(--U-glow), rgba(255,255,255,.06)); }
+  .b2 .fill{ background: linear-gradient(180deg, var(--B-glow), rgba(255,255,255,.06)); }
+  .b3 .fill{ background: linear-gradient(180deg, var(--R-glow), rgba(255,255,255,.06)); }
+  .b4 .fill{ background: linear-gradient(180deg, var(--G-glow), rgba(255,255,255,.06)); }
+  .b5 .fill{ background: linear-gradient(180deg, var(--Waste-glow), rgba(255,255,255,.06)); }
+  .b6 .fill{ background: linear-gradient(180deg, var(--U-glow), rgba(255,255,255,.06)); }
+  .b7 .fill{ background: linear-gradient(180deg, var(--R-glow), rgba(255,255,255,.06)); }
+
+  .bar label{
+    position:absolute; bottom:-22px; left:0; right:0; text-align:center; font-size:12px; color:#cfe3f5;
+  }
+  .bar .count{
+    position:absolute; top:6px; right:6px; font-size:11px; font-weight:900; color:#0b1020;
+    background: rgba(255,255,255,.6); border-radius:6px; padding:1px 6px;
+  }
+
+  /* tiny legend chips */
+  .legend{ display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
+  .dot{ display:inline-flex; align-items:center; gap:6px; font-size:12px; }
+  .sw{ width:14px; height:14px; border-radius:50%; box-shadow:0 0 10px rgba(255,255,255,.18) inset; }
+  .W{ background:var(--W); } .U{ background:var(--U); } .B{ background:var(--B); }
+  .R{ background:var(--R); } .G{ background:var(--G); } .Waste{ background:var(--Waste); }
+</style>
+</head>
+<body>
+  <div class="container">
+    <h1 class="accent">MTG Deck Builder — Five-Color Edition</h1>
+    <p class="muted">Pick a <b>format</b> (press <span class="chip kbd">1</span>–<span class="chip kbd">6</span>), add cards, and get live <b>type</b> & <b>color</b> stats (W/U/B/R/G/<b>Waste</b>). Copy limits and a CSS mana-curve chart included.</p>
+
+    <div class="grid">
+      <!-- 1) Format -->
+      <div class="card ring">
+        <div class="header"><h2>1) Choose Format</h2></div>
+        <div id="formatChips" class="chips"></div>
+        <p class="muted" id="formatHint">Basics + Wastes are unlimited. Others follow the format’s copy limit.</p>
+      </div>
+
+      <!-- 2) Catalog & add -->
+      <div class="card ring">
+        <div class="header"><h2>2) Add Cards</h2></div>
+        <label>Filters</label>
+        <div class="row">
+          <select id="colorFilter">
+            <option value="ALL">All colors</option>
+            <option value="W">White (W)</option>
+            <option value="U">Blue (U)</option>
+            <option value="B">Black (B)</option>
+            <option value="R">Red (R)</option>
+            <option value="G">Green (G)</option>
+            <option value="Waste">Waste (colorless)</option>
+            <option value="M">Multicolor</option>
+          </select>
+          <select id="typeFilter">
+            <option value="ALL">All types</option>
+            <option>Land</option><option>Creature</option><option>Artifact</option>
+            <option>Enchantment</option><option>Planeswalker</option><option>Instant</option><option>Sorcery</option>
+          </select>
+          <select id="cmcFilter">
+            <option value="ALL">Any CMC</option>
+            <option>0</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7+</option>
+          </select>
+          <button id="applyFilters">Apply</button>
+          <button id="resetFilters" class="danger">Reset</button>
+        </div>
+
+        <label for="catalogSel">Card (shows <i>left</i> to add under current limit)</label>
+        <select id="catalogSel" disabled></select>
+
+        <div class="row">
+          <input id="qty" type="number" min="1" step="1" value="1" />
+          <button id="addBtn" disabled>Add to deck</button>
+        </div>
+        <p class="muted">Shortcuts: <span class="chip kbd">A</span> add · <span class="chip kbd">C</span> clear deck</p>
+      </div>
+
+      <!-- 3) Deck -->
+      <div class="card ring">
+        <div class="header"><h2>3) Deck <span id="deckCount" class="pill type">0 cards</span></h2></div>
+        <div style="max-height:420px; overflow:auto;">
+          <table id="deckTable">
+            <thead>
+              <tr><th>Card</th><th>Qty</th><th>CMC</th><th>Type</th><th></th></tr>
+            </thead>
+            <tbody></tbody>
+            <tfoot>
+              <tr><td colspan="5" id="deckRule" class="muted" style="padding:8px 10px;"></td></tr>
+            </tfoot>
+          </table>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <button id="clearDeck" class="danger" disabled>Clear deck</button>
+        </div>
+      </div>
+
+      <!-- 4) Stats -->
+      <div class="card ring">
+        <div class="header"><h2>4) Stats</h2></div>
+
+        <h3 style="margin:6px 0 6px;">Mana Curve</h3>
+        <div id="curve" class="curve">
+          <!-- 8 buckets: 0..7+ -->
+          <div class="bar b0"><div class="fill"></div><span class="count">0</span><label>0</label></div>
+          <div class="bar b1"><div class="fill"></div><span class="count">0</span><label>1</label></div>
+          <div class="bar b2"><div class="fill"></div><span class="count">0</span><label>2</label></div>
+          <div class="bar b3"><div class="fill"></div><span class="count">0</span><label>3</label></div>
+          <div class="bar b4"><div class="fill"></div><span class="count">0</span><label>4</label></div>
+          <div class="bar b5"><div class="fill"></div><span class="count">0</span><label>5</label></div>
+          <div class="bar b6"><div class="fill"></div><span class="count">0</span><label>6</label></div>
+          <div class="bar b7"><div class="fill"></div><span class="count">0</span><label>7+</label></div>
+        </div>
+
+        <div class="legend">
+          <span class="dot"><span class="sw W"></span>W</span>
+          <span class="dot"><span class="sw U"></span>U</span>
+          <span class="dot"><span class="sw B"></span>B</span>
+          <span class="dot"><span class="sw R"></span>R</span>
+          <span class="dot"><span class="sw G"></span>G</span>
+          <span class="dot"><span class="sw Waste"></span>Waste</span>
+        </div>
+
+        <h3 style="margin:12px 0 6px;">Type Breakdown</h3>
+        <pre id="typeStats" class="muted" style="white-space:pre-wrap;margin:0;"></pre>
+
+        <h3 style="margin:12px 0 6px;">Color Distribution (W/U/B/R/G/Waste)</h3>
+        <pre id="colorStats" class="muted" style="white-space:pre-wrap;margin:0;"></pre>
+        <p class="muted" style="margin-top:8px;">Multicolor cards count toward each of their colors (sums can exceed 100%). Colorless cards count under <b>Waste</b>.</p>
+
+        <h3 style="margin:12px 0 6px;">Export / Import JSON</h3>
+        <div class="row">
+          <button id="exportJson">Export</button>
+          <button id="saveLocal" class="secondary">Save to LocalStorage</button>
+          <button id="loadLocal" class="secondary">Load from LocalStorage</button>
+        </div>
+        <label for="jsonBox">JSON</label>
+        <textarea id="jsonBox" placeholder='Paste JSON here to import...'></textarea>
+        <div class="row" style="margin-top:8px">
+          <button id="importJson">Import from Text</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* =========================
+   MTG Deck Builder — 5-Color Theme, Curve, Copy Limits
+   ========================= */
+
+const BASICS = new Set(["plains","island","swamp","mountain","forest","wastes"]); // unlimited
+
+const FORMATS = [
+  { key:"standard",  name:"Standard",  deckSize:60,  maxCopies:4 },
+  { key:"pioneer",   name:"Pioneer",   deckSize:60,  maxCopies:4 },
+  { key:"modern",    name:"Modern",    deckSize:60,  maxCopies:4 },
+  { key:"legacy",    name:"Legacy",    deckSize:60,  maxCopies:4 },
+  { key:"pauper",    name:"Pauper",    deckSize:60,  maxCopies:4 },
+  { key:"commander", name:"Commander", deckSize:100, maxCopies:1 } // non-basics singleton
+];
+
+let activeFormat = null;
+
+/* ---- Catalog (Map) ----
+   Card: {id,name,colors:Set<'W'|'U'|'B'|'R'|'G'|'Waste'>, cmc:number, type:string}
+*/
+const catalog = new Map([
+  // Basics (Wastes has "Waste" identity, others empty = basic)
+  ["plains",    {id:"plains",   name:"Plains",   colors:new Set(),               cmc:0, type:"Land"}],
+  ["island",    {id:"island",   name:"Island",   colors:new Set(),               cmc:0, type:"Land"}],
+  ["swamp",     {id:"swamp",    name:"Swamp",    colors:new Set(),               cmc:0, type:"Land"}],
+  ["mountain",  {id:"mountain", name:"Mountain", colors:new Set(),               cmc:0, type:"Land"}],
+  ["forest",    {id:"forest",   name:"Forest",   colors:new Set(),               cmc:0, type:"Land"}],
+  ["wastes",    {id:"wastes",   name:"Wastes",   colors:new Set(["Waste"]),      cmc:0, type:"Land"}],
+
+  // Mono-color examples
+  ["thraben_inspector",{id:"thraben_inspector", name:"Thraben Inspector", colors:new Set(["W"]), cmc:1, type:"Creature"}],
+  ["path_to_exile",    {id:"path_to_exile",     name:"Path to Exile",     colors:new Set(["W"]), cmc:1, type:"Instant"}],
+  ["banishing_light",  {id:"banishing_light",   name:"Banishing Light",   colors:new Set(["W"]), cmc:3, type:"Enchantment"}],
+  ["opt",              {id:"opt",               name:"Opt",               colors:new Set(["U"]), cmc:1, type:"Instant"}],
+  ["counterspell",     {id:"counterspell",      name:"Counterspell",      colors:new Set(["U"]), cmc:2, type:"Instant"}],
+  ["mulldrifter",      {id:"mulldrifter",       name:"Mulldrifter",       colors:new Set(["U"]), cmc:5, type:"Creature"}],
+  ["fatal_push",       {id:"fatal_push",        name:"Fatal Push",        colors:new Set(["B"]), cmc:1, type:"Instant"}],
+  ["thoughtseize",     {id:"thoughtseize",      name:"Thoughtseize",      colors:new Set(["B"]), cmc:1, type:"Sorcery"}],
+  ["lightning_bolt",   {id:"lightning_bolt",    name:"Lightning Bolt",    colors:new Set(["R"]), cmc:1, type:"Instant"}],
+  ["goblin_guide",     {id:"goblin_guide",      name:"Goblin Guide",      colors:new Set(["R"]), cmc:1, type:"Creature"}],
+  ["llanowar_elves",   {id:"llanowar_elves",    name:"Llanowar Elves",    colors:new Set(["G"]), cmc:1, type:"Creature"}],
+  ["tarmogoyf",        {id:"tarmogoyf",         name:"Tarmogoyf",         colors:new Set(["G"]), cmc:2, type:"Creature"}],
+
+  // Multi-color & colorless spells
+  ["lightning_helix",  {id:"lightning_helix",   name:"Lightning Helix",   colors:new Set(["R","W"]),      cmc:2, type:"Instant"}],
+  ["growth_spiral",    {id:"growth_spiral",     name:"Growth Spiral",     colors:new Set(["G","U"]),      cmc:2, type:"Instant"}],
+  ["omnath",           {id:"omnath",            name:"Omnath, Locus of Creation", colors:new Set(["W","U","R","G"]), cmc:4, type:"Creature"}],
+  ["arcane_signet",    {id:"arcane_signet",     name:"Arcane Signet",     colors:new Set(["Waste"]),      cmc:2, type:"Artifact"}],
+  ["the_one_ring",     {id:"the_one_ring",      name:"The One Ring",      colors:new Set(["Waste"]),      cmc:4, type:"Artifact"}],
+  ["karn",             {id:"karn",              name:"Karn, Scion of Urza", colors:new Set(["Waste"]),    cmc:4, type:"Planeswalker"}],
+  ["collected_company",{id:"collected_company", name:"Collected Company", colors:new Set(["G"]),          cmc:4, type:"Instant"}],
+  ["glorybringer",     {id:"glorybringer",      name:"Glorybringer",      colors:new Set(["R"]),          cmc:5, type:"Creature"}]
+]);
+
+/* Deck: Map<cardId, qty> */
+const deck = new Map();
+
+/* ---------- UI hooks ---------- */
+const formatChipsWrap = document.getElementById("formatChips");
+const formatHint = document.getElementById("formatHint");
+
+const colorFilter = document.getElementById("colorFilter");
+const typeFilter  = document.getElementById("typeFilter");
+const cmcFilter   = document.getElementById("cmcFilter");
+const applyFiltersBtn = document.getElementById("applyFilters");
+const resetFiltersBtn = document.getElementById("resetFilters");
+const catalogSel  = document.getElementById("catalogSel");
+const qtyInput    = document.getElementById("qty");
+const addBtn      = document.getElementById("addBtn");
+
+const deckTableBody = document.querySelector("#deckTable tbody");
+const deckCountEl   = document.getElementById("deckCount");
+const deckRuleEl    = document.getElementById("deckRule");
+const clearDeckBtn  = document.getElementById("clearDeck");
+
+const exportBtn = document.getElementById("exportJson");
+const saveLocalBtn = document.getElementById("saveLocal");
+const loadLocalBtn = document.getElementById("loadLocal");
+const importBtn = document.getElementById("importJson");
+const jsonBox   = document.getElementById("jsonBox");
+
+const typeStatsBox  = document.getElementById("typeStats");
+const colorStatsBox = document.getElementById("colorStats");
+
+/* ---------- Build format chips (1..6) ---------- */
+(function buildFormatChips(){
+  formatChipsWrap.innerHTML = "";
+  FORMATS.forEach((f, i) => {
+    const btn = document.createElement("button");
+    btn.className = "chip";
+    btn.dataset.key = f.key;
+    btn.innerHTML = `<span class="chip kbd">${i+1}</span> ${f.name} — ${f.deckSize} cards · max ${f.maxCopies}${f.key==="commander"?" (non-basics)":" each"}`;
+    btn.onclick = () => selectFormat(f.key);
+    formatChipsWrap.appendChild(btn);
+  });
+})();
+
+/* Keyboard: 1..6 select format; A add; C clear */
+window.addEventListener("keydown", (e)=>{
+  if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA" || e.target.tagName === "SELECT") return;
+  const n = Number(e.key);
+  if (n>=1 && n<=FORMATS.length){ selectFormat(FORMATS[n-1].key); return; }
+  if (!activeFormat) return;
+  if (e.key.toLowerCase()==="a") addCurrent();
+  if (e.key.toLowerCase()==="c") clearDeck();
+});
+
+/* ---------- Select format ---------- */
+function selectFormat(key){
+  activeFormat = FORMATS.find(f=>f.key===key);
+  [...formatChipsWrap.children].forEach(b => b.classList.toggle("active", b.dataset.key===key));
+  catalogSel.disabled = false;
+  addBtn.disabled = false;
+  clearDeckBtn.disabled = false;
+  fillCatalog();
+  renderDeck();
+  renderRules();
+}
+function renderRules(){
+  if(!activeFormat){ deckRuleEl.textContent = ""; return; }
+  const {deckSize, maxCopies, key} = activeFormat;
+  deckRuleEl.textContent = `Format: ${activeFormat.name} — Goal ${deckSize} cards · Max ${maxCopies}${key==="commander"?" (non-basics)":" per card"} · Basics + Wastes unlimited.`;
+}
+
+/* ---------- Filters & catalog ---------- */
+function matchesFilters(card){
+  // Color
+  const c = colorFilter.value;
+  if (c !== "ALL"){
+    if (c === "M"){ if (card.colors.size <= 1) return false; }
+    else if (c === "Waste"){ if (!card.colors.has("Waste") && card.colors.size !== 0) return false; }
+    else { if (!card.colors.has(c)) return false; }
+  }
+  // Type
+  const t = typeFilter.value;
+  if (t !== "ALL" && card.type !== t) return false;
+
+  // CMC
+  const cmc = cmcFilter.value;
+  if (cmc !== "ALL"){
+    if (cmc === "7+") { if (card.cmc < 7) return false; }
+    else if (card.cmc !== Number(cmc)) return false;
+  }
+  return true;
+}
+
+function remainingFor(id){
+  if(!activeFormat) return 0;
+  if (BASICS.has(id)) return Infinity;
+  const have = deck.get(id)||0;
+  return Math.max(0, activeFormat.maxCopies - have);
+}
+
+function fillCatalog(){
+  catalogSel.innerHTML = "";
+  const arr = [];
+  for (const [id, card] of catalog) if (matchesFilters(card)) arr.push([id, card]);
+  arr.sort((a,b)=> a[1].name.localeCompare(b[1].name));
+  const frag = document.createDocumentFragment();
+  for (const [id, card] of arr){
+    const colorTag = card.colors.size===0 ? "Waste" : [...card.colors].join("/");
+    const left = activeFormat ? (remainingFor(id)===Infinity ? "∞" : remainingFor(id)) : "-";
+    const opt = document.createElement("option");
+    opt.value = id;
+    opt.textContent = `${card.name} — CMC ${card.cmc} [${card.type}] (${colorTag}) • left: ${left}`;
+    frag.appendChild(opt);
+  }
+  catalogSel.appendChild(frag);
+}
+applyFiltersBtn.onclick = fillCatalog;
+resetFiltersBtn.onclick = () => { colorFilter.value="ALL"; typeFilter.value="ALL"; cmcFilter.value="ALL"; fillCatalog(); };
+
+/* ---------- Deck ops + limits ---------- */
+function addToDeck(id, qty){
+  if (!activeFormat) return alert("Pick a format first (1–6).");
+  if (!catalog.has(id)) return alert("Invalid card.");
+  qty = Math.floor(Number(qty));
+  if (!Number.isFinite(qty) || qty<=0) return alert("Quantity must be a positive integer.");
+
+  const isBasic = BASICS.has(id);
+  const current = deck.get(id)||0;
+  const limit = isBasic ? Infinity : activeFormat.maxCopies;
+
+  if (current + qty > limit){
+    const allowed = Math.max(0, limit - current);
+    if (allowed === 0) return alert(`Limit reached (${limit}) for this card in ${activeFormat.name}.`);
+    if (!confirm(`Limit is ${limit}. Add only ${allowed}?`)) return;
+    qty = allowed;
+  }
+
+  deck.set(id, current + qty);
+  renderDeck();
+  fillCatalog(); // refresh "left:" counts
+}
+function removeFromDeck(id){ deck.delete(id); renderDeck(); fillCatalog(); }
+function clearDeck(){ deck.clear(); renderDeck(); fillCatalog(); }
+function addCurrent(){ addToDeck(catalogSel.value, qtyInput.value); }
+
+addBtn.onclick = addCurrent;
+clearDeckBtn.onclick = clearDeck;
+
+/* ---------- Render deck & stats ---------- */
+function deckCount(){ let n=0; for (const [,q] of deck) n+=q; return n; }
+
+function renderDeck(){
+  deckTableBody.innerHTML = "";
+  if (deck.size===0){
+    deckTableBody.innerHTML = `<tr><td colspan="5" class="muted">Deck is empty.</td></tr>`;
+  } else {
+    for (const [id, q] of deck){
+      const c = catalog.get(id);
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${c.name}</td>
+        <td>${q}</td>
+        <td><span class="pill cmc">${c.cmc}</span></td>
+        <td><span class="pill type">${c.type}</span></td>
+        <td><button class="icon-btn" data-r="${id}">🗑</button></td>
+      `;
+      deckTableBody.appendChild(tr);
+    }
+    deckTableBody.querySelectorAll("button[data-r]").forEach(b=> b.onclick = () => removeFromDeck(b.dataset.r));
+  }
+  deckCountEl.textContent = `${deckCount()} cards`;
+  renderStats();
+  renderRules(); // keep helper line fresh
+}
+
+/* --- Stats (types/colors) + Mana Curve chart --- */
+function renderStats(){
+  const total = deckCount();
+  const denom = total || 1;
+
+  // Types
+  const typeOrder = ["Land","Creature","Artifact","Enchantment","Planeswalker","Instant","Sorcery"];
+  const typeCounts = new Map(typeOrder.map(t=>[t,0]));
+  for (const [id,q] of deck){
+    const t = catalog.get(id).type;
+    typeCounts.set(t, (typeCounts.get(t)||0) + q);
+  }
+  const typeLines = typeOrder.map(t=>{
+    const n = typeCounts.get(t)||0;
+    const p = ((n/denom)*100).toFixed(1);
+    return `${t.padEnd(12)}: ${String(n).padStart(3)}  (${p}%)`;
+  }).join("\n");
+  typeStatsBox.textContent = typeLines;
+
+  // Colors (W/U/B/R/G/Waste) — true colorless treated as Waste
+  const colorKeys = ["W","U","B","R","G","Waste"];
+  const colorCounts = new Map(colorKeys.map(k=>[k,0]));
+  for (const [id,q] of deck){
+    const colors = catalog.get(id).colors;
+    if (colors.size===0){
+      colorCounts.set("Waste", colorCounts.get("Waste")+q);
+    } else {
+      for (const col of colors){
+        if (colorCounts.has(col)) colorCounts.set(col, colorCounts.get(col)+q);
+      }
+    }
+  }
+  const colorLines = colorKeys.map(k=>{
+    const n = colorCounts.get(k)||0;
+    const p = ((n/denom)*100).toFixed(1);
+    return `${(k==="Waste"?"Waste":k).padEnd(6)}: ${String(n).padStart(3)}  (${p}%)`;
+  }).join("\n");
+  colorStatsBox.textContent = colorLines;
+
+  // Mana curve buckets
+  const buckets = new Array(8).fill(0); // 0..7
+  function bucketOf(cmc){ return cmc>=7 ? 7 : cmc; }
+  for (const [id,q] of deck){
+    const cmc = catalog.get(id).cmc|0;
+    buckets[bucketOf(cmc)] += q;
+  }
+  const maxBucket = Math.max(1, ...buckets);
+  const bars = document.querySelectorAll("#curve .bar");
+  bars.forEach((bar, i)=>{
+    const count = buckets[i]||0;
+    const h = Math.round((count/maxBucket)*100);
+    bar.querySelector(".fill").style.height = h+"%";
+    bar.querySelector(".count").textContent = count;
+  });
+
+  // Goal progress hint
+  if (activeFormat){
+    const diff = activeFormat.deckSize - total;
+    if (diff > 0) deckRuleEl.textContent = `Format: ${activeFormat.name} — Goal ${activeFormat.deckSize} · Need ${diff} more cards.`;
+    else if (diff < 0) deckRuleEl.textContent = `Format: ${activeFormat.name} — Goal ${activeFormat.deckSize} · ${-diff} over the goal; trim deck.`;
+    else deckRuleEl.textContent = `Format: ${activeFormat.name} — Reached goal ${activeFormat.deckSize}.`;
+  }
+}
+
+/* ---------- JSON export/import ---------- */
+// Deck JSON = array of [cardId, qty]
+function exportDeckJson(){ return JSON.stringify([...deck.entries()], null, 2); }
+exportBtn.onclick = () => (jsonBox.value = exportDeckJson());
+
+saveLocalBtn.onclick = () => {
+  localStorage.setItem("mtg_deck_json", exportDeckJson());
+  alert("Saved deck to LocalStorage.");
+};
+loadLocalBtn.onclick = () => {
+  const txt = localStorage.getItem("mtg_deck_json");
+  if(!txt) return alert("No saved deck found.");
+  importFromText(txt);
+};
+importBtn.onclick = () => importFromText(jsonBox.value);
+
+function importFromText(txt){
+  try{
+    const arr = JSON.parse(txt);
+    const temp = new Map(arr);
+    for (const [id,q] of temp){
+      if(!catalog.has(id)) throw new Error(`Unknown card id: ${id}`);
+      if(!Number.isFinite(q) || q<=0) throw new Error(`Bad qty for ${id}`);
+    }
+    deck.clear();
+    for (const [id,q] of temp) deck.set(id,q);
+    renderDeck(); fillCatalog();
+    alert("Imported deck.");
+  }catch(err){
+    alert("Import failed: " + err.message);
+  }
+}
+
+/* ---------- Init ---------- */
+fillCatalog();  // disabled until format chosen
+renderDeck();
+renderRules();
+</script>
+</body>
+</html>

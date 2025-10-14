@@ -1,0 +1,402 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Florida Dispensary — Neon</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root{
+    --bg-1:#0b0c10;      /* deep black-blue */
+    --bg-2:#111217;      /* panel bg */
+    --ink:#e7ffe7;       /* light ink */
+    --muted:#a7b0a7;
+    --neon-green:#39ff14;/* primary neon */
+    --neon-pink:#ff2bd6; /* accent neon */
+    --neon-blue:#00e5ff; /* subtle accent */
+    --line:#1e2330;
+    --card-border:#191c24;
+    --shadow: 0 0 24px rgba(57,255,20,0.08), 0 0 32px rgba(255,43,214,0.06);
+  }
+
+  /* Global */
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:24px;
+    color:var(--ink);
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Helvetica Neue", sans-serif;
+    background:
+      radial-gradient(1200px 800px at 10% -10%, rgba(255,43,214,0.18), transparent 60%),
+      radial-gradient(1000px 900px at 90% 110%, rgba(57,255,20,0.12), transparent 50%),
+      linear-gradient(180deg, var(--bg-1), #090a0f 60%, #07080c);
+  }
+  h1{margin:0 0 10px; font-size:22px; letter-spacing:.5px}
+  h2{margin:0 0 10px; font-size:18px}
+  .muted{color:var(--muted); font-size:13px}
+
+  /* Layout */
+  .grid{display:grid; gap:16px; grid-template-columns: repeat(auto-fit,minmax(320px,1fr));}
+
+  /* Card */
+  .card{
+    background:linear-gradient(180deg, var(--bg-2), #0d0f14);
+    border:1px solid var(--card-border);
+    border-radius:14px;
+    padding:16px;
+    box-shadow: var(--shadow);
+    position:relative;
+    overflow:hidden;
+  }
+  .card::after{
+    content:"";
+    position:absolute; inset:-2px;
+    border-radius:16px;
+    pointer-events:none;
+    background:
+      radial-gradient(400px 120px at 20% -10%, rgba(255,43,214,0.08), transparent 40%),
+      radial-gradient(300px 100px at 110% 120%, rgba(57,255,20,0.06), transparent 40%);
+    filter: blur(10px);
+  }
+
+  /* Form elements */
+  label{display:block; margin:10px 0 6px; font-size:13px; color:#e9ffe9}
+  select,input{
+    width:100%; padding:10px 12px; border-radius:10px;
+    color:var(--ink);
+    background:#0a0c12;
+    border:1px solid #222a38;
+    box-shadow: inset 0 0 0 1px rgba(0,229,255,0.06);
+    outline:none;
+    transition:border-color .15s, box-shadow .15s, transform .03s;
+  }
+  select:focus,input:focus{
+    border-color: var(--neon-green);
+    box-shadow: 0 0 0 3px rgba(57,255,20,0.15), 0 0 18px rgba(57,255,20,0.18);
+  }
+
+  /* Buttons */
+  .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+  button{
+    padding:10px 14px; border:0; border-radius:12px; font-weight:700; letter-spacing:.3px;
+    color:#041004; background:linear-gradient(180deg, #3cff24, var(--neon-green));
+    text-shadow:0 0 6px rgba(0,0,0,.25);
+    cursor:pointer; position:relative;
+    box-shadow: 0 0 20px rgba(57,255,20,0.25), inset 0 -8px 16px rgba(0,0,0,.25);
+    transition: transform .07s ease, filter .15s ease, box-shadow .2s ease;
+  }
+  button:hover{ filter:brightness(1.08) saturate(1.08) }
+  button:active{ transform: translateY(1px) }
+  button.secondary{
+    color:#070a10;
+    background: linear-gradient(180deg, #ff54e2, var(--neon-pink));
+    box-shadow: 0 0 20px rgba(255,43,214,.25), inset 0 -8px 16px rgba(0,0,0,.25);
+  }
+  button.danger{
+    color:#fff;
+    background: linear-gradient(180deg, #ff3b6e, #ff1f5f);
+    box-shadow: 0 0 20px rgba(255,63,120,.25), inset 0 -8px 16px rgba(0,0,0,.25);
+  }
+
+  /* Table */
+  table{width:100%; border-collapse:collapse; font-size:14px; overflow:hidden; border-radius:12px}
+  thead th{
+    background: linear-gradient(180deg, #121622, #0f1320);
+    border-bottom:1px solid var(--line);
+    color:#eaffea;
+    padding:10px;
+  }
+  td{
+    border-bottom:1px solid var(--line);
+    padding:9px 10px;
+  }
+  tfoot td{
+    background:#0e1119; font-weight:800;
+  }
+  .right{text-align:right}
+
+  /* Pills / notes */
+  .note{
+    display:inline-flex; align-items:center; gap:6px;
+    padding:6px 10px; border-radius:999px; font-size:12px; font-weight:700;
+    color:#021; background: rgba(57,255,20,0.16); border:1px solid rgba(57,255,20,0.35);
+    box-shadow: 0 0 16px rgba(57,255,20,0.18) inset, 0 0 12px rgba(57,255,20,0.12);
+  }
+  .note.pink{
+    color:#1b0016; background: rgba(255,43,214,0.16); border-color: rgba(255,43,214,0.35);
+    box-shadow: 0 0 16px rgba(255,43,214,0.18) inset, 0 0 12px rgba(255,43,214,0.12);
+  }
+
+  /* Tiny icon button in table */
+  .icon-btn{
+    padding:6px 10px; border-radius:10px; font-weight:800; background:#161a24; color:#ffdff7;
+    border:1px solid #2a3042; transition: border-color .15s, box-shadow .15s;
+  }
+  .icon-btn:hover{
+    border-color: var(--neon-pink);
+    box-shadow: 0 0 12px rgba(255,43,214,.2), 0 0 0 3px rgba(255,43,214,.1) inset;
+  }
+
+  /* Summary box */
+  #summary{
+    margin-top:12px; white-space:pre-wrap;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    background:#0b0f16; border:1px solid #1a2030; border-radius:12px; padding:12px;
+    box-shadow: inset 0 0 18px rgba(0,229,255,0.05);
+  }
+
+  /* Headline accent underline */
+  .accent{
+    display:inline-block; position:relative; padding-bottom:6px;
+  }
+  .accent::after{
+    content:""; position:absolute; left:0; right:0; bottom:0; height:3px;
+    background: linear-gradient(90deg, var(--neon-pink), var(--neon-green), var(--neon-blue));
+    box-shadow: 0 0 12px rgba(255,43,214,.4), 0 0 14px rgba(57,255,20,.35), 0 0 16px rgba(0,229,255,.3);
+    border-radius:3px;
+  }
+</style>
+</head>
+<body>
+  <h1 class="accent">Florida Dispensary — Neon Edition</h1>
+  <p class="muted">
+    <span class="note">Deal</span> Oil Cart special <b style="color:var(--neon-green)">2 for $50</b>. 
+    <span class="note pink">Points</span> <b>1 per $10</b> (floor). Redeem <b style="color:var(--neon-pink)">50 points</b> → <b>25% off</b> an order.
+  </p>
+
+  <div class="grid">
+    <!-- Add Items -->
+    <div class="card">
+      <h2>Add Items</h2>
+      <label for="product">Product</label>
+      <select id="product"></select>
+
+      <label for="qty">Quantity</label>
+      <input id="qty" type="number" min="1" step="1" value="1" />
+
+      <div class="row" style="margin-top:10px">
+        <button id="addBtn">Add to cart</button>
+        <button id="clearBtn" class="danger" title="Clear the cart">Clear cart</button>
+      </div>
+
+      <p class="muted" style="margin-top:10px">
+        Tip: Add several items before checkout. Use the 🗑 button to remove lines.
+      </p>
+    </div>
+
+    <!-- Cart -->
+    <div class="card">
+      <h2>Cart</h2>
+      <div style="overflow:auto; max-height: 360px;">
+        <table id="cartTable">
+          <thead>
+            <tr><th>Item</th><th>Qty</th><th>Price</th><th>Line</th><th></th></tr>
+          </thead>
+          <tbody></tbody>
+          <tfoot>
+            <tr><td colspan="3" class="right">Subtotal (before discount)</td><td id="subtotalCell">$0.00</td><td></td></tr>
+          </tfoot>
+        </table>
+      </div>
+      <p class="muted" id="dealNote"></p>
+    </div>
+
+    <!-- Checkout -->
+    <div class="card">
+      <h2>Checkout</h2>
+
+      <label for="dl">Driver's License Number (required)</label>
+      <input id="dl" type="text" placeholder="DL123456" />
+
+      <label for="med">Medical Card Number (required)</label>
+      <input id="med" type="text" placeholder="MED98765" />
+
+      <div class="row" style="margin-top:8px">
+        <label>
+          <input type="checkbox" id="applyDiscount" />
+          Redeem <b style="color:var(--neon-pink)">50 points</b> for <b>25% off</b>
+        </label>
+      </div>
+
+      <div class="row" style="margin-top:10px">
+        <button id="checkoutBtn" class="secondary">Checkout</button>
+      </div>
+
+      <div id="summary"></div>
+
+      <p class="muted" style="margin-top:12px">
+        Dummy accounts for testing:<br>
+        • DL: <b>DL123456</b> | MED: <b>MED98765</b> | starts with 20 points<br>
+        • DL: <b>DL654321</b> | MED: <b>MED54321</b> | starts with 70 points
+      </p>
+    </div>
+  </div>
+
+<script> // end of head, start of body
+/* ===== 1) CATALOG (object) ===== */
+const catalog = {
+  cal_kush_1_8: { name: "California Kush (1/8 oz)",  price: 30 },
+  cal_kush_1_2: { name: "California Kush (1/2 oz)",  price: 95 },
+  cal_kush_1:   { name: "California Kush (1 oz)",    price: 180 },
+
+  house_15g:     { name: "House Blend (15 g)",       price: 45 },
+  house_preroll: { name: "House Blend Pre-roll",     price: 15 },
+
+  moon_1_8: { name: "Moonlight Beams (1/8 oz)",      price: 30 },
+  moon_1_2: { name: "Moonlight Beams (1/2 oz)",      price: 110 },
+  moon_1:   { name: "Moonlight Beams (1 oz)",        price: 190 },
+
+  choco_bar: { name: "Infused Dark Chocolate Bar",   price: 25 },
+  oil_cart:  { name: "Oil Cart (single)",            price: 30 } // special: 2 for $50
+};
+
+/* ===== 2) DUMMY ACCOUNTS ===== */
+const accounts = [
+  { dl: "DL123456", med: "MED98765", points: 20 },
+  { dl: "DL654321", med: "MED54321", points: 70 }
+];
+
+/* ===== 3) CART (object) ===== */
+const cart = {}; // key -> qty
+
+/* ===== 4) UI HOOKS ===== */
+const productSel   = document.getElementById("product");
+const qtyInput     = document.getElementById("qty");
+const addBtn       = document.getElementById("addBtn");
+const clearBtn     = document.getElementById("clearBtn");
+const cartTableBody = document.querySelector("#cartTable tbody");
+const subtotalCell  = document.getElementById("subtotalCell");
+const dealNote      = document.getElementById("dealNote");
+
+const dlInput      = document.getElementById("dl");
+const medInput     = document.getElementById("med");
+const applyDiscountChk = document.getElementById("applyDiscount");
+const checkoutBtn  = document.getElementById("checkoutBtn");
+const summaryBox   = document.getElementById("summary");
+
+/* ===== 5) INIT ===== */
+(function fillProducts() {
+  const frag = document.createDocumentFragment();
+  Object.keys(catalog).forEach(key => {
+    const opt = document.createElement("option");
+    const item = catalog[key];
+    opt.value = key;
+    opt.textContent = `${item.name} — $${item.price}`;
+    frag.appendChild(opt);
+  });
+  productSel.appendChild(frag);
+})();
+
+function addToCart(key, qty) {
+  if (!catalog.hasOwnProperty(key)) { alert("Invalid product."); return; }
+  qty = Math.floor(Number(qty));
+  if (!Number.isFinite(qty) || qty <= 0) { alert("Quantity must be a positive integer."); return; }
+  cart[key] = (cart[key] || 0) + qty;
+  renderCart();
+}
+function removeFromCart(key){ delete cart[key]; renderCart(); }
+function clearCart(){ for (const k of Object.keys(cart)) delete cart[k]; renderCart(); }
+
+function calculateTotals() {
+  let subtotal = 0, oilDealApplied = false;
+  for (const key of Object.keys(cart)) {
+    const qty = cart[key];
+    const price = catalog[key].price;
+    if (key === "oil_cart") {
+      const pairs = Math.floor(qty / 2);
+      const remainder = qty - pairs * 2;
+      subtotal += (pairs * 50) + (remainder * price);
+      if (pairs > 0) oilDealApplied = true;
+    } else {
+      subtotal += qty * price;
+    }
+  }
+  const pointsEarned = Math.floor(subtotal / 10); // before discount
+  return { subtotal, pointsEarned, oilDealApplied };
+}
+
+function renderCart() {
+  cartTableBody.innerHTML = "";
+  const keys = Object.keys(cart);
+  if (keys.length === 0) {
+    cartTableBody.innerHTML = `<tr><td colspan="5" class="muted">Cart is empty.</td></tr>`;
+    subtotalCell.textContent = "$0.00";
+    dealNote.textContent = "";
+    return;
+  }
+  keys.forEach(key => {
+    const qty = cart[key];
+    const item = catalog[key];
+    let line = 0;
+    if (key === "oil_cart") {
+      const pairs = Math.floor(qty / 2);
+      const remainder = qty - pairs * 2;
+      line = (pairs * 50) + (remainder * item.price);
+    } else {
+      line = qty * item.price;
+    }
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${item.name}</td>
+      <td>${qty}</td>
+      <td>$${item.price}</td>
+      <td>$${line.toFixed(2)}</td>
+      <td><button class="icon-btn" data-remove="${key}" title="Remove">🗑</button></td>
+    `;
+    cartTableBody.appendChild(tr);
+  });
+  cartTableBody.querySelectorAll("button[data-remove]").forEach(btn => {
+    btn.addEventListener("click", e => removeFromCart(e.currentTarget.getAttribute("data-remove")));
+  });
+
+  const { subtotal, oilDealApplied } = calculateTotals();
+  subtotalCell.textContent = `$${subtotal.toFixed(2)}`;
+  dealNote.textContent = oilDealApplied ? "Oil Cart deal applied: every pair priced at $50." : "";
+}
+
+function findAccount(dl, med){ return accounts.find(a => a.dl === dl && a.med === med) || null; }
+
+function checkout() {
+  if (Object.keys(cart).length === 0) { alert("Cart is empty."); return; }
+  const dl = dlInput.value.trim();
+  const med = medInput.value.trim();
+  if (!dl || !med) { alert("Both Driver's License and Medical Card are required."); return; }
+
+  const account = findAccount(dl, med);
+  if (!account) { alert("Invalid account. Use one of the provided dummy accounts below."); return; }
+
+  const { subtotal: preDiscountSubtotal, pointsEarned } = calculateTotals();
+  let discount = 0, total = preDiscountSubtotal;
+
+  if (applyDiscountChk.checked && account.points >= 50) {
+    discount = 0.25 * total;
+    total -= discount;
+    account.points -= 50;
+  }
+
+  account.points += pointsEarned;
+
+  const summary = [
+    "=== CHECKOUT SUMMARY ===",
+    `Driver's License: ${dl}`,
+    `Medical Card:    ${med}`,
+    `Subtotal (pre-discount): $${preDiscountSubtotal.toFixed(2)}`,
+    `Discount applied:        $${discount.toFixed(2)}`,
+    `TOTAL DUE:               $${total.toFixed(2)}`,
+    `Points earned:           ${pointsEarned}`,
+    `Points balance (after):  ${account.points}`
+  ].join("\n");
+  summaryBox.textContent = summary;
+
+  clearCart();
+}
+
+/* Events */
+addBtn.addEventListener("click", () => addToCart(productSel.value, qtyInput.value));
+clearBtn.addEventListener("click", clearCart);
+checkoutBtn.addEventListener("click", checkout);
+
+/* First render */
+renderCart();
+</script>
+</body>
+</html>

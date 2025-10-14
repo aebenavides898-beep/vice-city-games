@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Candy Party — Small Map + Reaper (BG-only)</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<style>
+  :root{ --bg:#0e0f15; --panel:#141725; --ink:#f7f7ff; }
+  *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);
+    font:14px/1.4 ui-sans-serif,system-ui,Segoe UI,Roboto,Helvetica,Arial}
+  header{padding:10px 14px;border-bottom:1px solid #222538;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  header h1{font-size:16px;margin:0;font-weight:700}
+  main{display:grid;grid-template-columns:340px 1fr;min-height:calc(100vh - 52px)}
+  aside{background:#101423;padding:12px;border-right:1px solid #222538;overflow:auto}
+  section#boardWrap{position:relative;overflow:hidden}
+  canvas{display:block;width:100%;height:100%;background:#000}
+  .row{display:flex;gap:8px;align-items:center;margin:8px 0}
+  button,select{background:#242842;color:#fff;border:1px solid #2e3250;border-radius:8px;padding:8px 10px;cursor:pointer}
+  button:hover{border-color:#4a4f7a}
+  .players{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .card{background:#0b0f1a;border:1px solid #242842;border-radius:10px;padding:10px}
+  .log{height:170px;overflow:auto;background:#0b0f1a;border:1px solid #242842;border-radius:8px;padding:8px;font-family:ui-monospace,Menlo,Consolas,monospace}
+  .chip{display:inline-block;padding:2px 8px;border-radius:999px;background:#1d2135;border:1px solid #2a2f4a;margin-right:6px}
+  .pA{--c:#ff6aa4}.pB{--c:#7dd3fc}.pC{--c:#7ce9b8}.pD{--c:#ffd166}
+</style>
+</head>
+<body>
+  <header>
+    <h1>🍭 Candy Party — Small Map + Reaper (Background-only)</h1>
+    <span class="chip">All players start with 0 coins</span>
+    <span class="chip">Buy ⭐ for 10 coins</span>
+    <span class="chip">Land on occupied → steal half coins</span>
+  </header>
+  <main>
+    <aside>
+      <div class="card">
+        <div class="row">
+          <label>Players</label>
+          <select id="playerCount"><option>2</option><option>3</option><option>4</option></select>
+        </div>
+        <div class="row">
+          <label>Dice</label>
+          <label><input type="radio" name="dice" value="1" checked/> 1 die</label>
+          <label><input type="radio" name="dice" value="2"/> 2 dice</label>
+        </div>
+        <div class="row">
+          <label>Board</label>
+          <select id="bgSelect">
+            <option value="candy_kingdom_smallmap_connected.png">Small Map (connected)</option>
+          </select>
+        </div>
+        <div class="row" style="gap:6px;flex-wrap:wrap">
+          <button id="btnStart">Start Match</button>
+          <button id="btnRoll" disabled>Roll</button>
+          <button id="btnUseMoves" disabled>Use Saved Moves</button>
+          <button id="btnUseItem" disabled>Use Item</button>
+        </div>
+        <div class="row" style="font-size:12px;opacity:.8">Put the PNG in the same folder as this HTML.</div>
+      </div>
+
+      <div class="card">
+        <h3 style="margin:0 0 6px 0">Players</h3>
+        <div id="players" class="players"></div>
+      </div>
+
+      <div class="card">
+        <h3 style="margin:0 0 6px 0">Legend (effects baked into logic)</h3>
+        <div>+ +3c &nbsp; − −2c &nbsp; ? random &nbsp; W warp &nbsp; ★ star(10c)</div>
+        <div>J jail (need 6 or doubles; −1c/turn) &nbsp; $ bank +4c &nbsp; 👁 caress</div>
+        <div>M market (3 items, relocates when empty)</div>
+      </div>
+
+      <div class="card">
+        <h3 style="margin:0 0 6px 0">Log</h3>
+        <div id="log" class="log"></div>
+      </div>
+    </aside>
+
+    <section id="boardWrap">
+      <canvas id="board" width="1280" height="1280"></canvas>
+    </section>
+  </main>
+
+<script>
+/* === HOW THE CODE FOLLOWS YOUR EXACT PATH ===================
+   The image is just art. The path is defined by:
+   - NODES: each tile's (x,y) coordinate and type (matches your PNG)
+   - EDGES: which tile connects to which (forks/loops/connectors)
+   Movement advances along EDGES, one edge per pip of the roll.
+   =========================================================== */
+
+const NODES = [
+  ["S",1.2,9.2,"S"],
+  ["M1",1.0,8.3,"+"],["M2",0.9,7.3,"?"],["M3",1.0,6.3,"+"],["M4",1.3,5.3,"B"],["M5",2.0,4.5,"-"],
+  ["R1",2.0,8.3,"-"],["R2",2.5,7.3,"W"],["R3",2.8,6.3,"D"],["R4",2.7,5.3,"?"],["R5",2.4,4.5,"W"],
+  ["PZ1",3.5,2.5,"★"],["PZ2",3.0,2.2,"+"],["PZ3",4.0,2.2,"?"],
+  ["SC1",3.5,3.2,"-"],["SC2",3.5,4.2,"+"],["SC3",3.5,5.2,"?"],["SC4",3.5,6.2,"+"],
+  ["SH1",1.2,2.0,"M"],["SH2",1.0,1.2,"?"],
+  ["B1",6.0,2.0,"+"],["B2",7.0,2.2,"?"],["B3",8.0,2.5,"-"],["B4",8.8,3.0,"+"],["B5",8.8,4.0,"★"],["B6",8.2,4.7,"W"],
+  ["D1",7.0,5.5,"J"],["D2",7.5,6.2,"$"],["D3",8.0,7.0,"👁"],["D4",7.2,7.8,"★"],["D5",6.2,8.5,"-"],
+  ["C1",4.6,2.2,"+"],["C2",5.3,2.1,"?"],
+  ["C3",5.4,8.8,"+"],["C4",4.4,9.0,"?"],["C5",3.4,9.1,"-"],["C6",2.4,9.2,"+"],
+];
+const EDGES = {
+  S:["M1","R1"],
+
+  M1:["M2"], M2:["M3"], M3:["M4"], M4:["M5"], M5:["PZ2"],
+  R1:["R2"], R2:["R3"], R3:["R4"], R4:["R5"], R5:["PZ3"],
+
+  // Plaza hub: from PZ2 you can cross center (PZ1) to PZ3,
+  // or take Shop, Shortcut, or Connector to bottom-right.
+  PZ2:["PZ1","SH1","SC1","C1"],
+  PZ1:["PZ3"],
+  PZ3:["C1","SC1","SH1","B1"],
+
+  SC1:["SC2"], SC2:["SC3"], SC3:["SC4"], SC4:["C3","C6"],
+  SH1:["SH2"], SH2:["PZ2"],
+  C1:["C2"],  C2:["B1"],
+
+  B1:["B2"], B2:["B3"], B3:["B4"], B4:["B5"], B5:["B6"], B6:["D1"],
+  D1:["D2"], D2:["D3"], D3:["D4"], D4:["D5"], D5:["C3"],
+
+  C3:["C4"], C4:["C5"], C5:["C6"], C6:["S"],
+};
+const nodeById = Object.fromEntries(NODES.map(n=>[n[0],{id:n[0],x:n[1],y:n[2],type:n[3]}]));
+
+/* === STATE ================================================== */
+const $ = s => document.querySelector(s);
+const canvas = $("#board"); const ctx = canvas.getContext("2d");
+const COLORS = ["#ff6aa4","#7dd3fc","#7ce9b8","#ffd166"];
+const state = {
+  bgPath: "candy_kingdom_smallmap_connected.png",
+  diceCount: 1, players: [], turnIdx: 0, round: 1,
+  marketStock: null, marketEmpty: false,
+  reaper: {active:false,node:null,targetsRemaining:0,spawnedBySkulls:0}
+};
+$("#btnStart").onclick = startMatch;
+$("#btnRoll").onclick = onRoll;
+$("#btnUseMoves").onclick = useSavedMoves;
+$("#btnUseItem").onclick = useItem;
+$("#bgSelect").onchange = e => { state.bgPath = e.target.value; draw(); };
+
+function rnd(n){ return Math.floor(Math.random()*n); }
+function choice(a){ return a[rnd(a.length)]; }
+
+/* === START ================================================== */
+function startMatch(){
+  const n = +$("#playerCount").value;
+  state.diceCount = +document.querySelector("input[name=dice]:checked").value;
+  state.players = Array.from({length:n},(_,i)=>({
+    id:i,name:`P${i+1}`,color:COLORS[i],node:"S",
+    coins:0,stars:0,inJail:false,jailTries:0,savedMoves:0,items:[],caressTurns:0,
+    nextRollX2:false
+  }));
+  state.turnIdx=0; state.round=1;
+  state.marketStock=null; state.marketEmpty=false;
+  state.reaper={active:false,node:null,targetsRemaining:0,spawnedBySkulls:0};
+  $("#btnRoll").disabled=false; $("#btnUseMoves").disabled=false; $("#btnUseItem").disabled=false;
+  logClear(); log(`🎲 Match start — ${n} players, ${state.diceCount} die${state.diceCount>1?"s":""}.`);
+  renderPlayers(); draw();
+}
+
+/* === DICE / MOVEMENT ======================================== */
+function rollDice(count){ const f=[]; for(let i=0;i<count;i++) f.push(1+rnd(6)); return {faces:f,total:f.reduce((a,b)=>a+b,0)}; }
+function askFork(p, cur, outs){ const pick=prompt(`[${p.name}] Choose: ${outs.join(", ")}`, outs[0]); return outs.includes(pick)?pick:outs[0]; }
+function stepPlayer(p, steps){
+  let cur=p.node;
+  for(let i=0;i<steps;i++){
+    const outs=EDGES[cur]||[]; if(!outs.length)break;
+    cur = (outs.length===1)? outs[0] : askFork(p,cur,outs);
+  }
+  p.node=cur;
+}
+
+/* === ITEMS / MARKET ========================================= */
+function rollMarketStock(){
+  const pool = [
+    {id:"SKULL", name:"Deathless Skull (1c)", cost:1, desc:"Summon Reaper"},
+    {id:"MOVES2", name:"+2 Saved Moves (3c)", cost:3, desc:"+2 stored moves"},
+    {id:"BUFF2X", name:"Buff Candy (4c)", cost:4, desc:"Next roll ×2"},
+    {id:"CLEANSE", name:"Cleanse (2c)", cost:2, desc:"Remove Caress"},
+    {id:"POUCH5", name:"Coin Pouch (+5c)", cost:0, desc:"+5 coins"},
+    {id:"TRADE_A", name:"Trade 3⭐ → 9c", cost:0, desc:"Rare trade"},
+    {id:"TRADE_B", name:"Trade 2⭐ → 5c", cost:0, desc:"Rare trade"},
+  ];
+  const commons = pool.filter(x=>!x.id.startsWith("TRADE_"));
+  const rare = choice(pool.filter(x=>x.id.startsWith("TRADE_")));
+  const stock=[]; while(stock.length<2){ const it=choice(commons); if(!stock.find(s=>s.id===it.id)) stock.push(it); }
+  stock.push(rare); return stock;
+}
+function visitMarket(p){
+  if(!state.marketStock || state.marketEmpty){ state.marketStock=rollMarketStock(); state.marketEmpty=false; log(`🛒 Market relocated with new stock.`); }
+  let menu = state.marketStock.map((it,i)=>`${i+1}) ${it.name} — ${it.cost}c`).join("\n");
+  menu += `\n(Inventory: ${p.items.map(x=>x.id).join(",")||"empty"}; coins=${p.coins})`;
+  const pick = prompt(`Market — choose 1-3, 0=skip\n${menu}`,"0");
+  const idx=(+pick||0)-1; if(idx<0||idx>=state.marketStock.length){ log(`${p.name} leaves the Market.`); return; }
+  const it=state.marketStock[idx];
+  if(it.id==="TRADE_A"){ if(p.stars>=3){ p.stars-=3; p.coins+=9; log(`💱 Traded 3⭐→9c`); state.marketStock.splice(idx,1);} else log(`Need 3⭐`); }
+  else if(it.id==="TRADE_B"){ if(p.stars>=2){ p.stars-=2; p.coins+=5; log(`💱 Traded 2⭐→5c`); state.marketStock.splice(idx,1);} else log(`Need 2⭐`); }
+  else {
+    if(p.items.length>=2){ log(`👜 Inventory full`); return; }
+    if(p.coins<it.cost){ log(`❌ Not enough coins`); return; }
+    p.coins-=it.cost; p.items.push(it); state.marketStock.splice(idx,1); log(`✅ Bought ${it.id}`);
+  }
+  if(state.marketStock.length===0){ state.marketEmpty=true; log(`🛒 Market empty — will respawn elsewhere.`); }
+}
+function useItem(){
+  const p=curPlayer(); if(!p||!p.items.length){ alert("No items"); return; }
+  const menu=p.items.map((it,i)=>`${i+1}) ${it.name}`).join("\n");
+  const pick=prompt(`Use item:\n${menu}\n0) cancel`,"0"); const idx=(+pick||0)-1; if(idx<0||idx>=p.items.length)return;
+  const it=p.items[idx];
+  if(it.id==="SKULL"){ const leader=[...state.players].sort((a,b)=>(b.stars*100+b.coins)-(a.stars*100+a.coins))[0]; summonReaper({bySkulls:1,nearPlayer:leader}); p.items.splice(idx,1); log(`💀 ${p.name} used Skull!`); }
+  else if(it.id==="MOVES2"){ p.savedMoves+=2; p.items.splice(idx,1); log(`🏃 +2 saved moves`); }
+  else if(it.id==="BUFF2X"){ p.nextRollX2=true; p.items.splice(idx,1); log(`🍬 Next roll ×2`); }
+  else if(it.id==="CLEANSE"){ p.caressTurns=0; p.items.splice(idx,1); log(`🧼 Cleanse`); }
+  else if(it.id==="POUCH5"){ p.coins+=5; p.items.splice(idx,1); log(`🪙 +5 coins`); }
+  renderPlayers(); draw();
+}
+
+/* === REAPER ================================================= */
+function maybeSpawnReaperNatural(){
+  if(state.reaper.active) return;
+  const base = 5 + Math.min(state.round*1.5, 25);
+  if(Math.random()*100 < base){ summonReaper({bySkulls:0,nearPlayer:null}); log(`💀 The Reaper emerges...`); }
+}
+function summonReaper({bySkulls,nearPlayer}){
+  state.reaper.active=true; state.reaper.spawnedBySkulls+=bySkulls;
+  state.reaper.targetsRemaining=Math.max(1, bySkulls?1+bySkulls:1);
+  const safe=NODES.filter(n=>n[3]!=="J");
+  let pick = choice(safe)[0];
+  if(nearPlayer && bySkulls>0 && Math.random()*100 < Math.min(25*bySkulls,75)){
+    pick = safe.reduce((best,n)=>{ const d=dist(nodeById[n[0]],nodeById[nearPlayer.node]); return !best||d<best.d?{id:n[0],d}:best; },null).id;
+  }
+  state.reaper.node=pick;
+}
+function dist(a,b){ return Math.hypot(a.x-b.x, a.y-b.y); }
+function moveReaper(){
+  if(!state.reaper.active) return;
+  const num1=1+rnd(6), num2=1+rnd(6);
+  const icons=["☠","☁","★","🍬"]; const ic1=choice(icons), ic2=choice(icons);
+  const far = Math.min(...state.players.map(p=>dist(nodeById[state.reaper.node], nodeById[p.node]))) > 3.0;
+  const doubleIcon = ic1===ic2 || (far && Math.random()<0.35);
+  // choose target (bias to Caress)
+  let target = choice(state.players);
+  const bag=[];
+  state.players.forEach(p=>{ if(p.caressTurns>0){ const w=[0,.25,.5,.8][p.caressTurns]; for(let i=0;i<Math.round(w*10);i++) bag.push(p); }});
+  if(bag.length) target = choice(bag);
+  if(doubleIcon){
+    const tgt = Math.random()<0.7 ? target : choice(state.players);
+    state.reaper.node=tgt.node; log(`🌀 Reaper teleports to ${tgt.name}!`);
+    drainIfCaught(); return;
+  }
+  // move greedily toward target, ignoring terrain (can move "through" the board)
+  const steps=num1+num2;
+  for(let s=0;s<steps;s++){
+    const rpos=nodeById[state.reaper.node], to=nodeById[target.node];
+    let best=state.reaper.node, bestD=dist(rpos,to);
+    for(const n of NODES){
+      const d = Math.hypot(n[1]-to.x, n[2]-to.y);
+      if(d<bestD){ bestD=d; best=n[0]; }
+    }
+    state.reaper.node=best;
+    if(state.reaper.node===target.node) break;
+  }
+  drainIfCaught();
+}
+function drainIfCaught(){
+  for(const p of state.players){
+    if(p.node===state.reaper.node){
+      const c=p.coins,s=p.stars; p.coins=0;p.stars=0;
+      log(`🗡️ Reaper drains ${p.name}! (−${c}c, −${s}⭐)`); state.reaper.targetsRemaining--;
+      if(state.reaper.targetsRemaining<=0){ state.reaper.active=false; log(`🌫️ Reaper departs.`); }
+    }
+  }
+}
+
+/* === TURN FLOW ============================================= */
+function curPlayer(){ return state.players[state.turnIdx]; }
+function onRoll(){
+  const p=curPlayer();
+  // jail attempt
+  if(p.inJail){
+    const r=rollDice(state.diceCount);
+    log(`${p.name} (Jail) rolls ${r.faces.join("+")}=${r.total}`); p.jailTries++; p.coins=Math.max(0,p.coins-1);
+    const freed = (state.diceCount===1)? (r.faces[0]===6) : (r.faces[0]===r.faces[1]);
+    if(!freed){ log(`⛓ Still jailed.`); endTurnPhase(); return; }
+    p.inJail=false; p.jailTries=0; log(`✅ Escaped Jail!`);
+  }
+  // roll & move
+  let r=rollDice(state.diceCount); if(p.nextRollX2){ r.total*=2; p.nextRollX2=false; }
+  log(`${p.name} rolls ${r.faces.join("+")} = ${r.total}`);
+  stepPlayer(p, r.total);
+  resolveTile(p, nodeById[p.node]);
+  // steal half coins if collide
+  for(const q of state.players){ if(q!==p && q.node===p.node){ const steal=Math.floor(q.coins/2); q.coins-=steal; p.coins+=steal; log(`💥 ${p.name} steals ${steal}c from ${q.name}.`); } }
+  // simple win
+  if(p.coins>=20 || p.stars>=3){ alert(`🏆 ${p.name} wins!`); $("#btnRoll").disabled=true; return; }
+  endTurnPhase();
+}
+function useSavedMoves(){
+  const p=curPlayer(); if(!p||p.savedMoves<=0){ alert("No saved moves"); return; }
+  const steps=p.savedMoves; p.savedMoves=0; log(`🏃 ${p.name} uses ${steps} saved moves.`);
+  stepPlayer(p, steps); resolveTile(p, nodeById[p.node]);
+  for(const q of state.players){ if(q!==p && q.node===p.node){ const steal=Math.floor(q.coins/2); q.coins-=steal; p.coins+=steal; log(`💥 ${p.name} steals ${steal}c from ${q.name}.`); } }
+  if(p.coins>=20 || p.stars>=3){ alert(`🏆 ${p.name} wins!`); $("#btnRoll").disabled=true; return; }
+  endTurnPhase();
+}
+function endTurnPhase(){
+  maybeSpawnReaperNatural();
+  if(state.reaper.active) moveReaper();
+  state.turnIdx=(state.turnIdx+1)%state.players.length;
+  if(state.turnIdx===0) state.round++;
+  renderPlayers(); draw();
+}
+
+/* === TILE EFFECTS ========================================== */
+function resolveTile(p, node){
+  switch(node.type){
+    case "+": p.coins+=3; log(`🟢 +3 coins.`); break;
+    case "-": p.coins=Math.max(0,p.coins-2); log(`🔵 −2 coins.`); break;
+    case "?": {
+      const r=rnd(6);
+      if(r<=1){ p.coins+=3; log(`❓ +3 coins.`); }
+      else if(r<=3){ p.coins=Math.max(0,p.coins-2); log(`❓ −2 coins.`); }
+      else if(r===4){ p.savedMoves+=1; log(`❓ +1 saved move.`); }
+      else { if(p.coins>=10){ p.coins-=10; p.stars+=1; log(`❓ 10c → +1⭐.`); } else log(`❓ Nothing happened.`); }
+      break;
+    }
+    case "W": {
+      const safe=NODES.filter(n=>n[3]!=="J"); const pick=choice(safe); p.node=pick[0];
+      log(`🌀 Warp to ${p.node}.`); break;
+    }
+    case "★": {
+      if(p.coins>=10){ if(confirm("Buy 1⭐ for 10 coins?")){ p.coins-=10; p.stars+=1; log(`⭐ Bought a star.`); } }
+      else log(`⭐ Need 10 coins.`);
+      break;
+    }
+    case "J": p.inJail=true; p.jailTries=0; log(`⛓ Jailed (−1c/turn; need 6 or doubles).`); break;
+    case "$": p.coins+=4; log(`💰 Bank: +4 coins.`); break;
+    case "👁": p.caressTurns=3; log(`👁 Reaper’s Caress (3 turns).`); break;
+    case "M": visitMarket(p); break;
+    case "B": p.nextRollX2=true; log(`💖 Buff: next roll ×2.`); break;
+    case "D": /* placeholder */ log(`💢 Debuff tile (kept light).`); break;
+  }
+}
+
+/* === DRAW (BG only; NO tiles) ============================== */
+const COLORS_PLAY = ["#ff6aa4","#7dd3fc","#7ce9b8","#ffd166"];
+function draw(){
+  const wrap=$("#boardWrap"); const size=Math.min(wrap.clientWidth, wrap.clientHeight||wrap.clientWidth);
+  canvas.width=size; canvas.height=size;
+  const img=new Image(); img.src=state.bgPath;
+  img.onload=()=>{ ctx.drawImage(img,0,0,size,size); drawPieces(); };
+  img.onerror=()=>{ ctx.fillStyle="#0b0f1a"; ctx.fillRect(0,0,size,size); drawPieces(); };
+}
+function u(v){ return v/10 * canvas.width; }
+function drawPieces(){
+  // players
+  for(const p of state.players){
+    const n=nodeById[p.node]; ctx.fillStyle=p.color;
+    ctx.beginPath(); ctx.arc(u(n.x),u(n.y),u(0.08),0,Math.PI*2); ctx.fill();
+    ctx.lineWidth=3; ctx.strokeStyle="#0b0f1a"; ctx.stroke();
+    ctx.fillStyle="#0b0f1a"; ctx.font=`${Math.floor(u(0.08))}px ui-monospace`; ctx.textAlign="center"; ctx.textBaseline="middle";
+    ctx.fillText(p.name.slice(-1), u(n.x), u(n.y));
+  }
+  // reaper
+  if(state.reaper.active && state.reaper.node){
+    const r=nodeById[state.reaper.node];
+    ctx.fillStyle="#000"; ctx.beginPath(); ctx.arc(u(r.x),u(r.y),u(0.11),0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle="#9b5cff"; ctx.lineWidth=3; ctx.stroke();
+    ctx.fillStyle="#9b5cff"; ctx.font=`${Math.floor(u(0.1))}px ui-monospace`; ctx.textAlign="center"; ctx.textBaseline="middle";
+    ctx.fillText("☠", u(r.x), u(r.y));
+  }
+  // turn ring
+  if(state.players.length){
+    const p=state.players[state.turnIdx]; const n=nodeById[p.node];
+    ctx.strokeStyle=p.color; ctx.lineWidth=4; ctx.beginPath(); ctx.arc(u(n.x),u(n.y),u(0.16),0,Math.PI*2); ctx.stroke();
+  }
+}
+
+/* === PLAYERS PANEL + LOG =================================== */
+function renderPlayers(){
+  const box=$("#players"); box.innerHTML="";
+  state.players.forEach((p,i)=>{
+    const el=document.createElement("div"); el.className="card";
+    el.innerHTML=`
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div><span class="chip p${String.fromCharCode(65+i)}">${p.name}</span></div>
+        <div style="display:flex;gap:8px">
+          <span>🪙 ${p.coins}</span><span>⭐ ${p.stars}</span><span>🏃 ${p.savedMoves}</span>
+        </div>
+      </div>
+      <div style="opacity:.8;font-size:12px">${p.inJail?"⛓ In Jail":(p.caressTurns>0?`👁 Caress ${p.caressTurns}t`:"&nbsp;")}</div>`;
+    box.appendChild(el);
+  });
+}
+function log(m){ const el=$("#log"); el.innerHTML+=m+"<br/>"; el.scrollTop=el.scrollHeight; }
+function logClear(){ $("#log").innerHTML=""; }
+
+/* boot */
+draw();
+</script>
+</body>
+</html>

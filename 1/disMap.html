@@ -1,0 +1,458 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Florida Dispensary — Miami Vice Abstract (Map + Chip Filters)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  /* ===== Miami Vice Abstract — Professional UI ===== */
+  :root{
+    /* Palette */
+    --pink:#ff7ccf; --hotpink:#ff2bd6; --peach:#ffc8a2; --yellow:#ffe07a;
+    --aqua:#7afcff; --cyan:#31e7ff; --mint:#9dffb0; --violet:#c8a6ff;
+
+    /* Surfaces */
+    --panel: rgba(20,24,42,.72);
+    --panel-2: rgba(20,24,42,.86);
+    --stroke: rgba(255,255,255,.10);
+    --muted:#cfe3f5;
+
+    /* Accents */
+    --accent: linear-gradient(90deg, #7afcff, #ff7ccf, #ffe07a, #c8a6ff);
+
+    /* Buttons */
+    --btn1: linear-gradient(180deg, #aef6ff, #4de7ff);
+    --btn2: linear-gradient(180deg, #ffd0f1, #ff6adb);
+    --btn3: linear-gradient(180deg, #ffe8a2, #ffb66d);
+  }
+
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; color:#f7fbff;
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Helvetica Neue", sans-serif;
+    /* Abstract pattern:
+       - Conic/polar ribbons
+       - Subtle SVG geometry layer
+       - Soft radial vignettes
+    */
+    background:
+      radial-gradient(1200px 800px at 15% -10%, rgba(255,124,207,.22), transparent 60%),
+      radial-gradient(1000px 700px at 90% 110%, rgba(122,252,255,.20), transparent 60%),
+      conic-gradient(from 210deg at 30% 20%, rgba(122,252,255,.20), transparent 120deg),
+      conic-gradient(from 30deg at 70% 80%, rgba(255,224,122,.18), transparent 140deg),
+      url("data:image/svg+xml;utf8,\
+<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'>\
+  <defs>\
+    <linearGradient id='g1' x1='0' y1='0' x2='1' y2='1'>\
+      <stop offset='0%' stop-color='%237afcff' stop-opacity='.2'/>\
+      <stop offset='100%' stop-color='%23ff7ccf' stop-opacity='.2'/>\
+    </linearGradient>\
+  </defs>\
+  <g fill='none' stroke='url(%23g1)' stroke-width='1'>\
+    <path d='M0,40 H160 M0,120 H160 M40,0 V160 M120,0 V160'/>\
+    <circle cx='80' cy='80' r='22' stroke-opacity='.18'/>\
+    <path d='M20,80 C40,40 120,120 140,80' stroke-opacity='.16'/>\
+  </g>\
+</svg>") repeat,
+      linear-gradient(180deg, #12162a 0%, #0e1426 60%, #0b1020 100%);
+    background-size:
+      auto, auto, 140% 140%, 140% 140%, 160px 160px, auto;
+    background-blend-mode: screen, screen, screen, screen, overlay, normal;
+    overflow-x:hidden;
+  }
+
+  /* Subtle grain for polish */
+  body::before{
+    content:""; position:fixed; inset:0; pointer-events:none; z-index:-1;
+    background:
+      linear-gradient(0deg, rgba(255,255,255,.02), rgba(255,255,255,.02)),
+      repeating-linear-gradient(0deg, rgba(255,255,255,.02) 0 1px, transparent 1px 2px);
+    mix-blend-mode: overlay;
+  }
+
+  /* Layout */
+  .container{ max-width:1100px; margin:28px auto; padding:0 16px; }
+  h1{margin:0 0 10px; font-weight:900; letter-spacing:.6px; font-size:28px}
+  .accent{ position:relative; display:inline-block; padding-bottom:8px; }
+  .accent::after{
+    content:""; position:absolute; left:0; right:0; bottom:0; height:4px; border-radius:4px;
+    background: var(--accent); box-shadow: 0 0 18px rgba(122,252,255,.25), 0 0 18px rgba(255,124,207,.2);
+  }
+  .muted{ color:var(--muted); margin:0 0 16px; }
+
+  .grid{ display:grid; gap:18px; grid-template-columns: repeat(auto-fit, minmax(320px,1fr)); }
+  .card{
+    background: var(--panel); border:1px solid var(--stroke); border-radius:16px;
+    padding:16px; backdrop-filter: blur(10px);
+    box-shadow: 0 8px 30px rgba(0,0,0,.25);
+  }
+  .card .header{
+    margin:-16px -16px 12px; padding:12px 16px; border-bottom:1px solid rgba(255,255,255,.12);
+    border-top-left-radius:16px; border-top-right-radius:16px;
+    background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,0));
+    color:#e9f4ff; font-weight:900;
+  }
+  h2{ margin:0; font-size:16px; }
+
+  /* Inputs — Miami Vice pastels */
+  label{display:block; margin:10px 0 6px; font-size:13px}
+  select,input{
+    width:100%; padding:11px 12px; border-radius:12px; color:#f7fbff;
+    background: var(--panel-2);
+    border:1px solid #2a3454; outline:none;
+    transition:border-color .15s, box-shadow .15s;
+  }
+  select:focus,input:focus{ border-color:#7afcff; box-shadow:0 0 0 3px rgba(122,252,255,.16) }
+
+  /* Buttons */
+  .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+  button{
+    padding:10px 14px; border:0; border-radius:12px; font-weight:900; letter-spacing:.3px;
+    color:#072026; background: var(--btn1);
+    cursor:pointer; box-shadow: 0 8px 18px rgba(126,244,255,.22), inset 0 -8px 16px rgba(0,0,0,.25);
+    transition: transform .07s ease, filter .15s ease;
+  }
+  button:hover{ filter:brightness(1.07) }
+  button:active{ transform: translateY(1px) }
+  .secondary{ background: var(--btn2); color:#2a0f25 }
+  .danger{ background: var(--btn3); color:#3b1e00 }
+
+  /* Table */
+  table{width:100%; border-collapse:collapse; font-size:14px; overflow:hidden; border-radius:12px}
+  thead th{ background: linear-gradient(180deg, #141c36, #11182d); border-bottom:1px solid #243254; color:#e9f4ff; padding:10px; }
+  td{ border-bottom:1px solid #1d2948; padding:9px 10px; }
+  tfoot td{ background:#11182d; font-weight:800; }
+  .right{text-align:right}
+  .icon-btn{ padding:6px 10px; border-radius:10px; font-weight:800; background:#121a31; color:#ffdff7; border:1px solid #2c3456; cursor:pointer; }
+
+  /* Summary */
+  #summary{
+    margin-top:12px; white-space:pre-wrap;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    background:#0f1530; border:1px solid #273055; border-radius:12px; padding:12px;
+  }
+
+  /* Chip Filters — compact & pastel */
+  .chips{ display:flex; flex-wrap:wrap; gap:8px; margin:6px 0 10px; }
+  .chip{
+    display:inline-flex; align-items:center; gap:8px; padding:7px 12px; border-radius:999px; font-weight:800; font-size:12px;
+    border:1px solid #314068; background:#121a33; cursor:pointer; user-select:none; color:#e8f6ff;
+    transition: transform .06s ease, box-shadow .15s ease, border-color .15s ease, background .15s ease;
+  }
+  .chip:hover{ transform: translateY(-1px); box-shadow:0 6px 18px rgba(122,252,255,.14) }
+  .chip.active{ border-color:#7afcff; background: linear-gradient(180deg, rgba(122,252,255,.14), rgba(122,252,255,.04)); }
+  .chip.pink.active{ border-color:#ff7ccf; background: linear-gradient(180deg, rgba(255,124,207,.14), rgba(255,124,207,.04)); }
+
+  /* Badges */
+  .note{ display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; font-size:12px; font-weight:800;
+         color:#081a1a; background: rgba(122,252,255,.18); border:1px solid rgba(122,252,255,.36); }
+  .note.pink{ color:#210a1e; background: rgba(255,124,207,.18); border-color: rgba(255,124,207,.36); }
+</style>
+</head>
+<body>
+  <div class="container">
+    <h1 class="accent">Florida Dispensary — Miami Vice Abstract</h1>
+    <p class="muted">
+      <span class="note">Deal</span> Oil Cart special <b style="color:var(--aqua)">2 for $50</b>.
+      <span class="note pink">Points</span> <b>1 per $10</b> · Redeem <b style="color:var(--pink)">50 points</b> → <b>25% off</b>.
+    </p>
+
+    <div class="grid">
+      <!-- Filters + Add Items -->
+      <div class="card">
+        <div class="header"><h2>Add Items</h2></div>
+
+        <!-- Category chips (auto from catalog) -->
+        <label>Category</label>
+        <div id="catChips" class="chips"></div>
+
+        <!-- Strain chips -->
+        <label>Strain (Flower)</label>
+        <div id="strainChips" class="chips"></div>
+
+        <!-- Product + Qty -->
+        <label for="product">Product</label>
+        <select id="product"></select>
+
+        <label for="qty">Quantity</label>
+        <input id="qty" type="number" min="1" step="1" value="1" />
+
+        <div class="row" style="margin-top:10px">
+          <button id="addBtn">Add to cart</button>
+          <button id="clearBtn" class="danger">Clear cart</button>
+        </div>
+      </div>
+
+      <!-- Cart -->
+      <div class="card">
+        <div class="header"><h2>Cart</h2></div>
+        <div style="overflow:auto; max-height: 360px;">
+          <table id="cartTable">
+            <thead>
+              <tr><th>Item</th><th>Qty</th><th>Price</th><th>Line</th><th></th></tr>
+            </thead>
+            <tbody></tbody>
+            <tfoot>
+              <tr><td colspan="3" class="right">Subtotal</td><td id="subtotalCell">$0.00</td><td></td></tr>
+            </tfoot>
+          </table>
+        </div>
+        <p class="muted" id="dealNote"></p>
+      </div>
+
+      <!-- Checkout -->
+      <div class="card">
+        <div class="header"><h2>Checkout</h2></div>
+        <label for="dl">Driver's License</label>
+        <input id="dl" type="text" placeholder="DL123456" />
+        <label for="med">Medical Card</label>
+        <input id="med" type="text" placeholder="MED98765" />
+        <div class="row" style="margin-top:8px">
+          <label><input type="checkbox" id="applyDiscount" /> Redeem 50 points for 25% off</label>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <button id="checkoutBtn" class="secondary">Checkout</button>
+        </div>
+        <div id="summary"></div>
+
+        <p class="muted" style="margin-top:12px">
+          Dummy accounts for testing:<br>
+          • DL: <b>DL123456</b> | MED: <b>MED98765</b> | starts with 20 points<br>
+          • DL: <b>DL654321</b> | MED: <b>MED54321</b> | starts with 70 points
+        </p>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* =========================
+   Map-based Dispensary + Chip Filters
+   ========================= */
+
+/* Inventory value: { name, price, category, strain? } */
+const catalog = new Map([
+  /* Flowers (with strain) */
+  ["cal_kush_1_8",      { name:"California Kush (1/8 oz)", price:30, category:"Flower", strain:"Hybrid" }],
+  ["moon_1_8",          { name:"Moonlight Beams (1/8 oz)", price:30, category:"Flower", strain:"Indica" }],
+  ["og_kush_1_8",       { name:"OG Kush (1/8 oz)",         price:35, category:"Flower", strain:"Indica" }],
+  ["blue_dream_1_8",    { name:"Blue Dream (1/8 oz)",      price:32, category:"Flower", strain:"Hybrid" }],
+  ["sour_diesel_1_8",   { name:"Sour Diesel (1/8 oz)",     price:33, category:"Flower", strain:"Sativa" }],
+  ["gelato_1_8",        { name:"Gelato (1/8 oz)",          price:36, category:"Flower", strain:"Hybrid" }],
+  ["gdp_1_8",           { name:"Granddaddy Purple (1/8 oz)", price:34, category:"Flower", strain:"Indica" }],
+  ["green_crack_1_8",   { name:"Green Crack (1/8 oz)",     price:31, category:"Flower", strain:"Sativa" }],
+  ["wedding_cake_1_8",  { name:"Wedding Cake (1/8 oz)",    price:36, category:"Flower", strain:"Hybrid" }],
+  ["northern_lights",   { name:"Northern Lights (1/8 oz)", price:34, category:"Flower", strain:"Indica" }],
+  ["durban_poison",     { name:"Durban Poison (1/8 oz)",   price:33, category:"Flower", strain:"Sativa" }],
+  ["super_lemon_haze",  { name:"Super Lemon Haze (1/8 oz)",price:34, category:"Flower", strain:"Sativa" }],
+  ["purple_punch",      { name:"Purple Punch (1/8 oz)",    price:35, category:"Flower", strain:"Indica" }],
+  ["zkittlez",          { name:"Zkittlez (1/8 oz)",        price:36, category:"Flower", strain:"Hybrid" }],
+  ["mac_1",             { name:"MAC #1 (1/8 oz)",          price:38, category:"Flower", strain:"Hybrid" }],
+
+  /* Carts */
+  ["oil_cart",            { name:"Oil Cart (single)",                 price:30, category:"Cart" }], // 2-for-$50 applies
+  ["cart_pineapple_1g",   { name:"Oil Cart — Pineapple (1g)",         price:40, category:"Cart" }],
+  ["cart_strawberry_1g",  { name:"Oil Cart — Strawberry (1g)",        price:40, category:"Cart" }],
+  ["cart_gelato_1g",      { name:"Oil Cart — Gelato (1g)",            price:45, category:"Cart" }],
+  ["cart_live_res_1g",    { name:"Live Resin Cart (1g)",              price:55, category:"Cart" }],
+  ["cart_sour_diesel",    { name:"Oil Cart — Sour Diesel (1g)",       price:42, category:"Cart" }],
+  ["cart_blue_dream",     { name:"Oil Cart — Blue Dream (1g)",        price:42, category:"Cart" }],
+  ["cart_gdp",            { name:"Oil Cart — Granddaddy Purple (1g)", price:45, category:"Cart" }],
+  ["cart_lemon_haze",     { name:"Oil Cart — Lemon Haze (1g)",        price:42, category:"Cart" }],
+  ["cart_zkittlez",       { name:"Oil Cart — Zkittlez (1g)",          price:45, category:"Cart" }],
+
+  /* Edibles, Beverages */
+  ["choco_bar",           { name:"Infused Dark Chocolate Bar (100mg)", price:25, category:"Edible" }],
+  ["gummies_100",         { name:"Gummy Pack (100mg)",                  price:20, category:"Edible" }],
+  ["gummies_sour_200",    { name:"Sour Gummies (200mg)",                price:30, category:"Edible" }],
+  ["milk_choco_bar",      { name:"Infused Milk Chocolate (100mg)",      price:25, category:"Edible" }],
+  ["brownie_200",         { name:"Infused Brownie (200mg)",             price:35, category:"Edible" }],
+  ["nano_drink_10",       { name:"Nano Drink (10mg)",                   price:6,  category:"Beverage" }],
+  ["seltzer_10",          { name:"Infused Seltzer (10mg)",              price:7,  category:"Beverage" }],
+  ["iced_tea_25",         { name:"Infused Iced Tea (25mg)",             price:9,  category:"Beverage" }],
+
+  /* Oils/Tinctures */
+  ["tincture_1000",       { name:"Tincture (1000mg)",                   price:60, category:"Oil/Tincture" }],
+  ["tincture_cbn_600",    { name:"CBN Tincture (600mg)",                price:55, category:"Oil/Tincture" }],
+  ["rso_1g",              { name:"RSO (1g)",                            price:50, category:"Oil/Tincture" }],
+
+  /* Concentrates */
+  ["wax_1g",              { name:"Wax (1g)",                            price:35, category:"Concentrate" }],
+  ["shatter_1g",          { name:"Shatter (1g)",                        price:40, category:"Concentrate" }],
+  ["rosin_1g",            { name:"Rosin (1g)",                          price:70, category:"Concentrate" }],
+
+  /* Prerolls, Topicals */
+  ["house_preroll",       { name:"House Blend Pre-roll",                price:15, category:"Pre-roll" }],
+  ["preroll_5pack",       { name:"Pre-roll 5-Pack",                     price:45, category:"Pre-roll" }],
+  ["balm_200",            { name:"Topical Balm (200mg)",                price:35, category:"Topical" }]
+]);
+
+const accounts = new Map([
+  ["DL123456|MED98765", { points: 20 }],
+  ["DL654321|MED54321", { points: 70 }]
+]);
+
+const cart = new Map();
+
+/* ===== UI hooks ===== */
+const productSel   = document.getElementById("product");
+const qtyInput     = document.getElementById("qty");
+const addBtn       = document.getElementById("addBtn");
+const clearBtn     = document.getElementById("clearBtn");
+const cartTableBody= document.querySelector("#cartTable tbody");
+const subtotalCell = document.getElementById("subtotalCell");
+const dealNote     = document.getElementById("dealNote");
+const dlInput      = document.getElementById("dl");
+const medInput     = document.getElementById("med");
+const applyDiscountChk = document.getElementById("applyDiscount");
+const checkoutBtn  = document.getElementById("checkoutBtn");
+const summaryBox   = document.getElementById("summary");
+
+const catChipsWrap    = document.getElementById("catChips");
+const strainChipsWrap = document.getElementById("strainChips");
+
+/* ====== Filters state ====== */
+let activeCategory = "ALL";
+let activeStrain   = "ALL";
+
+/* Build category chips from catalog */
+(function buildCategoryChips(){
+  const cats = new Set(["ALL"]);
+  for(const [,item] of catalog) cats.add(item.category);
+  for(const c of Array.from(cats).sort()){
+    const chip = document.createElement("button");
+    chip.type="button";
+    chip.className = "chip" + (c==="ALL" ? " active" : "");
+    chip.textContent = (c==="ALL" ? "All" : c);
+    chip.dataset.value = c;
+    chip.onclick = () => {
+      activeCategory = c;
+      [...catChipsWrap.children].forEach(ch=>ch.classList.toggle("active", ch.dataset.value===c));
+      fillProducts();
+    };
+    catChipsWrap.appendChild(chip);
+  }
+})();
+
+/* Build strain chips (fixed set) */
+(function buildStrainChips(){
+  const strains = ["ALL","Indica","Sativa","Hybrid"];
+  for(const s of strains){
+    const chip = document.createElement("button");
+    chip.type="button";
+    chip.className = "chip pink" + (s==="ALL" ? " active" : "");
+    chip.textContent = (s==="ALL" ? "All strains" : s);
+    chip.dataset.value = s;
+    chip.onclick = () => {
+      activeStrain = s;
+      [...strainChipsWrap.children].forEach(ch=>ch.classList.toggle("active", ch.dataset.value===s));
+      fillProducts();
+    };
+    strainChipsWrap.appendChild(chip);
+  }
+})();
+
+/* Populate product dropdown based on active filters */
+function fillProducts(){
+  productSel.innerHTML = "";
+  const frag = document.createDocumentFragment();
+  for(const [key,item] of catalog){
+    if(activeCategory!=="ALL" && item.category!==activeCategory) continue;
+    if(activeStrain!=="ALL"){
+      if(item.category!=="Flower") continue;             // strain filter applies only to flower
+      if(item.strain!==activeStrain) continue;
+    }
+    const tag = item.category + (item.strain ? ` • ${item.strain}` : "");
+    const opt = document.createElement("option");
+    opt.value=key; opt.textContent=`${item.name} — $${item.price} [${tag}]`;
+    frag.appendChild(opt);
+  }
+  productSel.appendChild(frag);
+  // If nothing matched, relax strain automatically to show category
+  if(!productSel.value && activeStrain!=="ALL"){
+    activeStrain="ALL";
+    [...strainChipsWrap.children].forEach(ch=>ch.classList.toggle("active", ch.dataset.value===activeStrain));
+    fillProducts();
+  }
+}
+fillProducts();
+
+/* Cart operations */
+function addToCart(k,q){
+  if(!catalog.has(k)) return alert("Invalid product.");
+  q = Math.floor(Number(q));
+  if(!Number.isFinite(q) || q<=0) return alert("Quantity must be a positive integer.");
+  cart.set(k, (cart.get(k)||0) + q);
+  renderCart();
+}
+function removeFromCart(k){ cart.delete(k); renderCart(); }
+function clearCart(){ cart.clear(); renderCart(); }
+
+/* Totals with Oil Cart special (key: 'oil_cart') */
+function calculateTotals(){
+  let subtotal=0, oilDeal=false;
+  for(const [k,q] of cart){
+    const {price} = catalog.get(k);
+    if(k==="oil_cart"){
+      const pairs=Math.floor(q/2), rem=q%2;
+      subtotal += pairs*50 + rem*price;
+      if(pairs>0) oilDeal=true;
+    }else{
+      subtotal += q*price;
+    }
+  }
+  return { subtotal, points: Math.floor(subtotal/10), oilDeal };
+}
+
+/* Render cart */
+function renderCart(){
+  cartTableBody.innerHTML = "";
+  if(cart.size===0){
+    cartTableBody.innerHTML = `<tr><td colspan="5" class="muted">Cart is empty.</td></tr>`;
+    subtotalCell.textContent = "$0.00";
+    dealNote.textContent = "";
+    return;
+  }
+  for(const [k,q] of cart){
+    const item = catalog.get(k);
+    const line = (k==="oil_cart") ? (Math.floor(q/2)*50 + (q%2)*item.price) : q*item.price;
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${item.name}</td><td>${q}</td><td>$${item.price}</td><td>$${line.toFixed(2)}</td><td><button class="icon-btn" data-r="${k}">🗑</button></td>`;
+    cartTableBody.appendChild(tr);
+  }
+  cartTableBody.querySelectorAll("button[data-r]").forEach(b=> b.onclick = () => removeFromCart(b.dataset.r));
+  const {subtotal, oilDeal} = calculateTotals();
+  subtotalCell.textContent = `$${subtotal.toFixed(2)}`;
+  dealNote.textContent = oilDeal ? "Oil Cart deal applied (2 for $50)." : "";
+}
+
+/* Accounts + checkout */
+function findAccount(dl,med){ return accounts.get(`${dl}|${med}`)||null; }
+function checkout(){
+  if(cart.size===0) return alert("Cart is empty.");
+  const acc = findAccount(dlInput.value.trim(), medInput.value.trim());
+  if(!acc) return alert("Invalid account. Use one of the dummy accounts on the page.");
+  const {subtotal:pre, points} = calculateTotals();
+  let disc=0, total=pre;
+  if(applyDiscountChk.checked && acc.points>=50){ disc = 0.25*total; total -= disc; acc.points -= 50; }
+  acc.points += points;
+  summaryBox.textContent = [
+    "=== CHECKOUT SUMMARY ===",
+    `Driver's License: ${dlInput.value.trim()}`,
+    `Medical Card:    ${medInput.value.trim()}`,
+    `Subtotal (pre-discount): $${pre.toFixed(2)}`,
+    `Discount applied:        $${disc.toFixed(2)}`,
+    `TOTAL DUE:               $${total.toFixed(2)}`,
+    `Points earned:           ${points}`,
+    `Points balance (after):  ${acc.points}`
+  ].join("\n");
+  clearCart();
+}
+
+/* Events */
+document.getElementById("addBtn").onclick = () => addToCart(productSel.value, qtyInput.value);
+document.getElementById("clearBtn").onclick = clearCart;
+document.getElementById("checkoutBtn").onclick = checkout;
+</script>
+</body>
+</html>
